@@ -1,6 +1,7 @@
-require "opera/version"
+require 'opera/version'
+
+require 'opera/errors'
+require 'opera/operation'
 
 module Opera
-  class Error < StandardError; end
-  # Your code goes here...
 end

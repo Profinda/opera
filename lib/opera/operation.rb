@@ -1,22 +1,20 @@
 # frozen_string_literal: true
 
-require 'dry-validation'
+require 'opera/operation/builder'
+require 'opera/operation/base'
+require 'opera/operation/executor'
+require 'opera/operation/result'
+require 'opera/operation/config'
+require 'opera/operation/instructions/executors/success'
+require 'opera/operation/instructions/executors/transaction'
+require 'opera/operation/instructions/executors/benchmark'
+require 'opera/operation/instructions/executors/validate'
+require 'opera/operation/instructions/executors/operation'
+require 'opera/operation/instructions/executors/operations'
+require 'opera/operation/instructions/executors/step'
 
-require 'pro_finda/operation/builder'
-require 'pro_finda/operation/base'
-require 'pro_finda/operation/executor'
-require 'pro_finda/operation/result'
-require 'pro_finda/operation/config'
-require 'pro_finda/operation/instructions/executors/success'
-require 'pro_finda/operation/instructions/executors/transaction'
-require 'pro_finda/operation/instructions/executors/benchmark'
-require 'pro_finda/operation/instructions/executors/validate'
-require 'pro_finda/operation/instructions/executors/operation'
-require 'pro_finda/operation/instructions/executors/operations'
-require 'pro_finda/operation/instructions/executors/step'
-
-module ProFinda
+module Opera
   module Operation
-    class UnknownInstructionError < ProFinda::Error; end
+
   end
 end

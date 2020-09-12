@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     module Builder
       INSTRUCTIONS = %I[validate transaction benchmark step success operation operations].freeze

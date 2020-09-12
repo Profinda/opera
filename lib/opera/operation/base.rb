@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     class Base
       extend Gem::Deprecate
-      include ProFinda::Operation::Builder
+      include Opera::Operation::Builder
 
       attr_accessor :context
       attr_reader :params, :dependencies, :result

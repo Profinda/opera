@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     class Result
       attr_reader :errors, # Acumulator of errors in validation + steps

@@ -1,4 +1,4 @@
-# ProFinda::Operation
+# Opera::Operation
 
 Simple DSL for services/interactions classes.
 
@@ -17,13 +17,13 @@ gem 'pro_finda-operation', path: 'vendor/pro_finda-operation'
 # Configuration
 
 ```ruby
-ProFinda::Operation::Config.configure do |config|
+Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
   config.transaction_method = :transaction
   config.reporter = if defined?(Rollbar) then Rollbar else Rails.logger
 end
 
-class A < ProFinda::Operation::Base
+class A < Opera::Operation::Base
 
   configure do |config|
     config.transaction_class = Profile
@@ -62,11 +62,11 @@ end
 
 # Specs
 
-When using ProFinda::Operation inside an engine add the following
+When using Opera::Operation inside an engine add the following
 configuration to your spec_helper.rb or rails_helper.rb:
 
 ```
-ProFinda::Operation::Config.configure do |config|
+Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
 end
 ```
@@ -90,10 +90,10 @@ end
 
 This should display exceptions captured inside operations.
 
-You can also do it in ProFinda::Operation configuration block:
+You can also do it in Opera::Operation configuration block:
 
 ```
-ProFinda::Operation::Config.configure do |config|
+Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
   config.reporter = Logger.new(STDERR)
 end
@@ -127,7 +127,7 @@ Some cases and example how to use new operations
 ## Basic operation
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :create
@@ -165,7 +165,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x0000561636dced60 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-14 16:04:08", updated_at: "2018-12-14 16:04:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000561636dced60 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-14 16:04:08", updated_at: "2018-12-14 16:04:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 #### Call with INVALID parameters - missing first_name
@@ -178,7 +178,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x0000562d3f635390 @errors={:first_name=>["is missing"]}, @exceptions={}, @information={}, @executions=[:profile_schema]>
+#<Opera::Operation::Result:0x0000562d3f635390 @errors={:first_name=>["is missing"]}, @exceptions={}, @information={}, @executions=[:profile_schema]>
 ```
 
 #### Call with MISSING dependencies
@@ -191,13 +191,13 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x007f87ba2c8f00 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 33, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:04:25", updated_at: "2019-01-03 12:04:25", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007f87ba2c8f00 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 33, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:04:25", updated_at: "2019-01-03 12:04:25", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ## Example with sanitizing parameters
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :create
@@ -237,13 +237,13 @@ Profile::Create.call(params: {
 })
 
 # NOTE: Last name is missing in output model
-#<ProFinda::Operation::Result:0x000055e36a1fab78 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 44, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: nil, created_at: "2018-12-17 11:07:08", updated_at: "2018-12-17 11:07:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x000055e36a1fab78 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 44, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: nil, created_at: "2018-12-17 11:07:08", updated_at: "2018-12-17 11:07:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ## Example operation with old validations
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :build_record
@@ -297,7 +297,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x0000560ebc9e7a98 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :old_validation, :create, :send_email, :output], @output={:model=>#<Profile id: 41, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-14 19:15:12", updated_at: "2018-12-14 19:15:12", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000560ebc9e7a98 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :old_validation, :create, :send_email, :output], @output={:model=>#<Profile id: 41, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-14 19:15:12", updated_at: "2018-12-14 19:15:12", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 #### Call with INVALID parameters
@@ -310,13 +310,13 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x0000560ef76ba588 @errors={:last_name=>["can't be blank"]}, @exceptions={}, @information={:missing_validations=>"Please check dry validations"}, @executions=[:build_record, :old_validation]>
+#<Opera::Operation::Result:0x0000560ef76ba588 @errors={:last_name=>["can't be blank"]}, @exceptions={}, @information={:missing_validations=>"Please check dry validations"}, @executions=[:build_record, :old_validation]>
 ```
 
 ## Example with step that raises exception
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :build_record
@@ -364,13 +364,13 @@ result = Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x0000562ad0f897c8 @errors={}, @exceptions={"Profile::Create#exception"=>["Example"]}, @information={}, @executions=[:profile_schema, :build_record, :exception]>
+#<Opera::Operation::Result:0x0000562ad0f897c8 @errors={}, @exceptions={"Profile::Create#exception"=>["Example"]}, @information={}, @executions=[:profile_schema, :build_record, :exception]>
 ```
 
 ## Example with step that finishes execution
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :build_record
@@ -414,13 +414,13 @@ result = Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<ProFinda::Operation::Result:0x007fc2c59a8460 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :create]>
+#<Opera::Operation::Result:0x007fc2c59a8460 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :create]>
 ```
 
 ## Failing transaction
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   configure do |config|
     config.transaction_class = Profile
   end
@@ -476,13 +476,13 @@ D, [2018-12-14T16:13:30.946466 #2504] DEBUG -- :   Account Load (0.5ms)  SELECT 
 D, [2018-12-14T16:13:30.960254 #2504] DEBUG -- :    (0.2ms)  BEGIN
 D, [2018-12-14T16:13:30.983981 #2504] DEBUG -- :   SQL (0.7ms)  INSERT INTO "profiles" ("first_name", "last_name", "created_at", "updated_at", "account_id") VALUES ($1, $2, $3, $4, $5) RETURNING "id"  [["first_name", "foo"], ["last_name", "bar"], ["created_at", "2018-12-14 16:13:30.982289"], ["updated_at", "2018-12-14 16:13:30.982289"], ["account_id", 1]]
 D, [2018-12-14T16:13:30.986233 #2504] DEBUG -- :    (0.2ms)  ROLLBACK
-#<ProFinda::Operation::Result:0x00005650e89b7708 @errors={}, @exceptions={"Profile::Create#update"=>["unknown attribute 'example_attr' for Profile."], "Profile::Create#transaction"=>["ProFinda::Operation::Base::RollbackTransactionError"]}, @information={}, @executions=[:profile_schema, :create, :update]>
+#<Opera::Operation::Result:0x00005650e89b7708 @errors={}, @exceptions={"Profile::Create#update"=>["unknown attribute 'example_attr' for Profile."], "Profile::Create#transaction"=>["Opera::Operation::Base::RollbackTransactionError"]}, @information={}, @executions=[:profile_schema, :create, :update]>
 ```
 
 ## Passing transaction
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   configure do |config|
     config.transaction_class = Profile
   end
@@ -538,13 +538,13 @@ D, [2018-12-17T12:10:44.856964 #2741] DEBUG -- :    (0.2ms)  BEGIN
 D, [2018-12-17T12:10:44.881332 #2741] DEBUG -- :   SQL (0.7ms)  INSERT INTO "profiles" ("first_name", "last_name", "created_at", "updated_at", "account_id") VALUES ($1, $2, $3, $4, $5) RETURNING "id"  [["first_name", "foo"], ["last_name", "bar"], ["created_at", "2018-12-17 12:10:44.879684"], ["updated_at", "2018-12-17 12:10:44.879684"], ["account_id", 1]]
 D, [2018-12-17T12:10:44.886168 #2741] DEBUG -- :   SQL (0.6ms)  UPDATE "profiles" SET "updated_at" = $1 WHERE "profiles"."id" = $2  [["updated_at", "2018-12-16 12:10:44.883164"], ["id", 47]]
 D, [2018-12-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
-#<ProFinda::Operation::Result:0x0000556528f29058 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-17 12:10:44", updated_at: "2018-12-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000556528f29058 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-17 12:10:44", updated_at: "2018-12-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ## Benchmark
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   step :create
@@ -590,13 +590,13 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<ProFinda::Operation::Result:0x007ff414a01238 @errors={}, @exceptions={}, @information={:real=>1.800013706088066e-05, :total=>0.0}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-19 10:46:00", updated_at: "2018-12-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @exceptions={}, @information={:real=>1.800013706088066e-05, :total=>0.0}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2018-12-19 10:46:00", updated_at: "2018-12-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ## Success
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   success :populate
@@ -649,13 +649,13 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<ProFinda::Operation::Result:0x007fd0248e5638 @errors={"mailer"=>["Missing dependency"]}, @exceptions={}, @information={}, @executions=[:profile_schema, :populate, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 40, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:21:35", updated_at: "2019-01-02 12:21:35", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007fd0248e5638 @errors={"mailer"=>["Missing dependency"]}, @exceptions={}, @information={}, @executions=[:profile_schema, :populate, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 40, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:21:35", updated_at: "2019-01-02 12:21:35", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ## Inner Operation
 
 ```ruby
-class Profile::Find < ProFinda::Operation::Base
+class Profile::Find < Opera::Operation::Base
   step :find
 
   def find
@@ -663,7 +663,7 @@ class Profile::Find < ProFinda::Operation::Base
   end
 end
 
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   validate :profile_schema
 
   operation :find
@@ -701,14 +701,14 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<ProFinda::Operation::Result:0x007f99b25f0f20 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :find, :create, :output], @output={:model=>{:id=>1, :user_id=>1, :linkedin_uid=>nil, ...}}>
+#<Opera::Operation::Result:0x007f99b25f0f20 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :find, :create, :output], @output={:model=>{:id=>1, :user_id=>1, :linkedin_uid=>nil, ...}}>
 ```
 
 ## Inner Operations
-Expects that method returns array of `ProFinda::Operation::Result`
+Expects that method returns array of `Opera::Operation::Result`
 
 ```ruby
-class Profile::Create < ProFinda::Operation::Base
+class Profile::Create < Opera::Operation::Base
   step :validate
   step :create
 
@@ -719,7 +719,7 @@ class Profile::Create < ProFinda::Operation::Base
   end
 end
 
-class Profile::CreateMultiple < ProFinda::Operation::Base
+class Profile::CreateMultiple < Opera::Operation::Base
   operations :create_multiple
 
   step :output
@@ -739,16 +739,16 @@ end
 ```ruby
 Profile::CreateMultiple.call(params: { number: 3 })
 
-#<ProFinda::Operation::Result:0x0000564189f38c90 @errors={}, @exceptions={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
+#<Opera::Operation::Result:0x0000564189f38c90 @errors={}, @exceptions={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
 ```
 
-## ProFinda::Operation::Result - Instance Methods
+## Opera::Operation::Result - Instance Methods
 
 Sometimes it may be useful to be able to create an instance of the `Result` with preset `output`.
 It can be handy especially in specs. Then just include it in the initializer:
 
 ```
-ProFinda::Operation::Result.new(output: 'success')
+Opera::Operation::Result.new(output: 'success')
 ```
 
 >
@@ -762,23 +762,23 @@ ProFinda::Operation::Result.new(output: 'success')
     - add_exceptions(Hash)     - Adds multiple exceptions
     - add_information(Hash)    - Adss new information - Useful informations for developers
 
-## ProFinda::Operation::Base - Class Methods
+## Opera::Operation::Base - Class Methods
 >
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
       - raise Exception        - exception gets captured and stops operation execution
-    - operation(Symbol)        - single instruction - requires to return ProFinda::Operation::Result object
-      - return [ProFinda::Operation::Result] - stops operation STEPS execution if any error, exception
+    - operation(Symbol)        - single instruction - requires to return Opera::Operation::Result object
+      - return [Opera::Operation::Result] - stops operation STEPS execution if any error, exception
     - validate(Symbol)         - single dry-validations - requires to return Dry::Validation::Result object
       - return [Dry::Validation::Result] - stops operation STEPS execution if any error but continue with other validations
     - transaction(*Symbols)    - list of instructions to be wrapped in transaction
       - return [Truthly]       - continue operation execution
       - return [False|Exception] - stops operation execution and breaks transaction/do rollback
     - call(params: Hash, dependencies: Hash?)
-      - return [ProFinda::Operation::Result] - never raises an exception
+      - return [Opera::Operation::Result] - never raises an exception
 
-## ProFinda::Operation::Base - Instance Methods
+## Opera::Operation::Base - Instance Methods
 >
     - context [Hash]          - used to pass information between steps - only for internal usage
     - params [Hash]           - immutable and received in call method

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     class Config
       attr_accessor :transaction_class, :transaction_method, :reporter

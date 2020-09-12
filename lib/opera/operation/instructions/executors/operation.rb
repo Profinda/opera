@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     module Instructions
       module Executors

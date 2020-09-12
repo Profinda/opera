@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     module Instructions
       module Executors
         class Transaction < Executor
-          class RollbackTransactionError < ProFinda::Error; end
+          class RollbackTransactionError < Opera::Error; end
 
           def call(instruction)
             transaction_class.send(transaction_method) do

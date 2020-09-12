@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-require 'dry-types'
+require 'benchmark'
+require 'dry-validation'
+require 'spec_helper'
 
-module ProFinda
+module Opera
   RSpec.describe Operation::Base, type: :operation do
     let(:operation_class) do
       Class.new(Operation::Base) do
@@ -17,12 +18,12 @@ module ProFinda
         def step_1; end
 
         def validation_1
-          Dry::Validation.Schema do
+          ::Dry::Validation.Schema do
           end.call({})
         end
 
         def validation_2
-          Dry::Validation.Schema do
+          ::Dry::Validation.Schema do
           end.call({})
         end
       end
@@ -52,7 +53,7 @@ module ProFinda
     end
 
     describe '.result' do
-      it { expect(subject).to be_an_instance_of(ProFinda::Operation::Result) }
+      it { expect(subject).to be_an_instance_of(Opera::Operation::Result) }
     end
 
     describe '.call' do

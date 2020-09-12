@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     module Instructions
       module Executors
         class Operations < Executor
-          class WrongOperationsResultError < ProFinda::Error; end
+          class WrongOperationsResultError < Opera::Error; end
 
           # rubocop:disable Metrics/MethodLength
           def call(instruction)
@@ -17,7 +17,7 @@ module ProFinda
             case operations_results
             when Array
               operations_results.each do |operation_result|
-                raise_error unless operation_result.is_a?(ProFinda::Operation::Result)
+                raise_error unless operation_result.is_a?(Opera::Operation::Result)
               end
 
               failures = operations_results.select(&:failure?)
@@ -49,7 +49,7 @@ module ProFinda
           end
 
           def raise_error
-            raise WrongOperationsResultError, 'Have to return array of ProFinda::Operation::Result'
+            raise WrongOperationsResultError, 'Have to return array of Opera::Operation::Result'
           end
         end
       end

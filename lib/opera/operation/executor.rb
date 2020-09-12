@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ProFinda
+module Opera
   module Operation
     class Executor
       attr_reader :operation
@@ -20,7 +20,7 @@ module ProFinda
       end
 
       def evaluate_instructions(instructions = [])
-        instruction_copy = instructions.deep_dup
+        instruction_copy = Marshal.load(Marshal.dump(instructions))
 
         while instruction_copy.any?
           instruction = instruction_copy.shift
