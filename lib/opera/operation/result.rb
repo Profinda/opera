@@ -10,6 +10,8 @@ module Opera
 
       attr_accessor :output # Final object returned if success?
 
+      alias to_h output
+
       def initialize(output: nil, errors: {})
         @errors = errors
         @exceptions = {}
@@ -43,7 +45,7 @@ module Opera
       # rubocop:enable Metrics/MethodLength
 
       def add_errors(errors)
-        errors.each_pair do |key, value|
+        errors.to_h.each_pair do |key, value|
           add_error(key, value)
         end
       end

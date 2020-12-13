@@ -18,13 +18,17 @@ module Opera
         def step_1; end
 
         def validation_1
-          ::Dry::Validation.Schema do
-          end.call({})
+          Class.new(Dry::Validation::Contract) do
+            params do
+            end
+          end.new.call({})
         end
 
         def validation_2
-          ::Dry::Validation.Schema do
-          end.call({})
+          Class.new(Dry::Validation::Contract) do
+            params do
+            end
+          end.new.call({})
         end
       end
     end
@@ -79,15 +83,19 @@ module Opera
             def step_1; end
 
             def validation_1
-              Dry::Validation.Schema do
-                required(:profile_id).filled(:int?)
-              end.call(params)
+              Class.new(Dry::Validation::Contract) do
+                params do
+                  required(:profile_id).filled(:int?)
+                end
+              end.new.call(params)
             end
 
             def validation_2
-              Dry::Validation.Schema do
-                required(:profile_id).filled(eql?: 102)
-              end.call(params)
+              Class.new(Dry::Validation::Contract) do
+                params do
+                  required(:profile_id).filled(eql?: 102)
+                end
+              end.new.call(params)
             end
           end
         end

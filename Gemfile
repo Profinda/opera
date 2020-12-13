@@ -8,4 +8,5 @@ gem 'rspec', '~> 3.0'
 
 group :test, :development do
   gem 'dry-validation'
+  gem 'pry-byebug', require: false
 end
