@@ -31,7 +31,7 @@ Simply initialise the configuration and chose what method you want to use to rep
 Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
   config.transaction_method = :transaction
-  config.reporter = if defined?(Rollbar) then Rollbar else Rails.logger
+  config.reporter = defined?(Rollbar) ? Rollbar : Rails.logger
 end
 ```
 
