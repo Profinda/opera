@@ -8,9 +8,7 @@ module Opera
           def call(instruction)
             instruction[:kind] = :step
             operation_result = super
-
-            return if operation_result.is_a?(Array)
-            result.add_information(operation_result.information)
+            save_information(operation_result)
 
             if operation_result.success?
               add_instruction_output(instruction, operation_result.output)
@@ -20,6 +18,14 @@ module Opera
               result.add_errors(operation_result.errors)
               result.add_exceptions(operation_result.exceptions)
             end
+          end
+
+          private
+
+          def save_information(operation_result)
+            return unless operation_result.respond_to?(:information)
+
+            result.add_information(operation_result.information)
           end
         end
       end
