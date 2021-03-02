@@ -8,6 +8,7 @@ module Opera
           def call(instruction)
             instruction[:kind] = :step
             operation_result = super
+            result.add_information(operation_result.information)
 
             if operation_result.success?
               add_instruction_output(instruction, operation_result.output)
@@ -16,7 +17,6 @@ module Opera
             else
               result.add_errors(operation_result.errors)
               result.add_exceptions(operation_result.exceptions)
-              result.add_information(operation_result.information)
             end
           end
         end
