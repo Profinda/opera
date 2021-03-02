@@ -16,6 +16,7 @@ module Opera
             else
               result.add_errors(operation_result.errors)
               result.add_exceptions(operation_result.exceptions)
+              result.add_information(operation_result.information)
             end
           end
         end
