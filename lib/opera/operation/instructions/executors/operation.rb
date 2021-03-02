@@ -8,6 +8,8 @@ module Opera
           def call(instruction)
             instruction[:kind] = :step
             operation_result = super
+
+            return if operation_result.is_a?(Array)
             result.add_information(operation_result.information)
 
             if operation_result.success?
