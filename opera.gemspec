@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'opera'
   spec.version       = Opera::VERSION
   spec.authors       = ['ProFinda Development Team']
-  spec.email         = ['francisco.ruiz@profinda.com']
+  spec.email         = ['dev@profinda.com']
 
   spec.summary       = 'Use simple DSL language to keep your Operations clean and maintainable'
   spec.homepage      = 'https://github.com/Profinda/opera'
@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'dry-validation'
+  spec.add_development_dependency 'dry-validation', '>= 1.0'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
 end

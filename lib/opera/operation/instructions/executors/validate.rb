@@ -14,6 +14,7 @@ module Opera
           def evaluate_instruction(instruction)
             instruction[:kind] = :step
             dry_result = super
+
             add_instruction_output(instruction, dry_result.to_h)
             result.add_errors(dry_result.errors) unless dry_result.success?
           end
