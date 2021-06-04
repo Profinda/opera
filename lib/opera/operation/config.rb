@@ -8,6 +8,7 @@ module Opera
       def initialize
         @transaction_class = self.class.transaction_class
         @transaction_method = self.class.transaction_method || :transaction
+        @transaction_options = self.class.transaction_options
         @reporter = custom_reporter || self.class.reporter
       end
 
