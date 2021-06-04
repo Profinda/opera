@@ -8,7 +8,8 @@ module Opera
           class RollbackTransactionError < Opera::Error; end
 
           def call(instruction)
-            transaction_class.send(transaction_method, transaction_options) do
+            arguments = transaction_options.present? ? [transaction_method, transaction_options] : [transaction_method]
+            transaction_class.send(arguments) do
               super
 
               return if !operation.finished? && result.success?

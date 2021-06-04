@@ -3,7 +3,7 @@
 module Opera
   module Operation
     class Config
-      attr_accessor :transaction_class, :transaction_method, :reporter
+      attr_accessor :transaction_class, :transaction_method, :transaction_options, :reporter
 
       def initialize
         @transaction_class = self.class.transaction_class
@@ -21,7 +21,7 @@ module Opera
       end
 
       class << self
-        attr_accessor :transaction_class, :transaction_method, :reporter
+        attr_accessor :transaction_class, :transaction_method, :transaction_options, :reporter
 
         def configure
           yield self
