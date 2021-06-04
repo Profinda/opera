@@ -9,7 +9,7 @@ module Opera
 
           def call(instruction)
             arguments = transaction_options.present? ? [transaction_method, transaction_options] : [transaction_method]
-            transaction_class.send(arguments) do
+            transaction_class.send(*arguments) do
               super
 
               return if !operation.finished? && result.success?
