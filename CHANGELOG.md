@@ -4,3 +4,6 @@
 
 - Initial release
 
+## 0.2.1 - July 7, 2021
+
+- Support for transaction options
