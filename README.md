@@ -1,6 +1,6 @@
 # Opera
 
-![Master](https://github.com/Profinda/opera/actions/workflows/ruby.yml/badge.svg?branch=master)
+![Master](https://github.com/Profinda/opera/actions/workflows/release.yml/badge.svg?branch=master)
 
 
 Simple DSL for services/interactions classes.
