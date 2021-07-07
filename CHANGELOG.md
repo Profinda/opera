@@ -7,3 +7,7 @@
 ## 0.2.1 - July 7, 2021
 
 - Support for transaction options
+
+## 0.2.2 - July 7, 2021
+
+- Test release using Github Actions
