@@ -1,5 +1,6 @@
 # Opera
 
+[![Gem Version](https://badge.fury.io/rb/opera.svg)](https://badge.fury.io/rb/opera)
 ![Master](https://github.com/Profinda/opera/actions/workflows/release.yml/badge.svg?branch=master)
 
 
