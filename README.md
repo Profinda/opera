@@ -1,5 +1,8 @@
 # Opera
 
+![Master](https://github.com/Profinda/opera/actions/workflows/ruby.yml/badge.svg?branch=master)
+
+
 Simple DSL for services/interactions classes.
 
 Opera was born to mimic some of the philosophy of the dry gems but keeping the DSL simple.
