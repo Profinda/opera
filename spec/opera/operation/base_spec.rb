@@ -606,6 +606,48 @@ module Opera
             expect(subject).to be_success
           end
         end
+
+        context 'for transaction options' do
+          let(:transaction_class) do
+            Class.new do
+              def self.transaction(args)
+                yield
+              end
+            end
+          end
+          let(:transaction_options) do
+            { foo: :bar }
+          end
+
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              transaction do
+                step :step_3
+              end
+
+              def step_1
+                true
+              end
+
+              def step_3
+                true
+              end
+            end
+          end
+
+          before do
+            Operation::Config.configure do |config|
+              config.transaction_class = transaction_class
+              config.transaction_options = transaction_options
+            end
+          end
+
+          it 'passes transaction options to transaction class' do
+            expect(transaction_class).to receive(:transaction).with(transaction_options)
+            subject
+          end
+        end
       end
 
       context 'for operation' do
