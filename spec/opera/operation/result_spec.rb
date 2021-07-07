@@ -69,16 +69,18 @@ module Opera
     end
 
     describe '#add_exception' do
-      let(:params) { [:example, 'Example'] }
 
-      before { subject.add_exception(*params) }
-
-      it { expect(subject.exceptions).to eq('example' => ['Example']) }
+      it do
+        subject.add_exception(:example, 'Example')
+        expect(subject.exceptions).to eq('example' => ['Example'])
+      end
 
       context 'when classname provided' do
-        let(:params) { [:example, 'Example', classname: 'Foo'] }
 
-        it { expect(subject.exceptions).to eq('Foo#example' => ['Example']) }
+        it do
+          subject.add_exception(:example, 'Example', classname: 'Foo')
+          expect(subject.exceptions).to eq('Foo#example' => ['Example'])
+        end
       end
     end
 
