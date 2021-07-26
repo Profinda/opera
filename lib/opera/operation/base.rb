@@ -60,7 +60,13 @@ module Opera
               check_method_availability!(attribute)
 
               define_method(attribute) do
-                send(method)[attribute] ||= options[:default]
+                value = send(method).key?(attribute) ? send(method)[attribute] : options[:default]
+
+                if send(method).frozen?
+                  send(method)[attribute] || value
+                else
+                  send(method)[attribute] ||= value
+                end
               end
             end
           end
