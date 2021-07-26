@@ -437,7 +437,7 @@ class Profile::Create < Opera::Operation::Base
 
   def create
     self.profile = profile.save
-    finish
+    finish!
   end
 
   def send_email
@@ -845,7 +845,7 @@ Opera::Operation::Result.new(output: 'success')
     - context [Hash]          - used to pass information between steps - only for internal usage
     - params [Hash]           - immutable and received in call method
     - dependencies [Hash]     - immutable and received in call method
-    - finish                  - this method interrupts the execution of steps after is invoked
+    - finish!                 - this method interrupts the execution of steps after is invoked
 
 ## Development
 
