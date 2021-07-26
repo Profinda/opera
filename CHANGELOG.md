@@ -1,5 +1,10 @@
 # Opera Changelog
 
+### 0.2.4 - July 26, 2021
+
+- prevent default from overwrite falsy values
+- allow params and dependencies to get defaults
+
 ### 0.2.3 - July 26, 2021
 
 - Support context, params and dependencies accessors

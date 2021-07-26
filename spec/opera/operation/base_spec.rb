@@ -163,6 +163,27 @@ module Opera
 
           it { expect(subject.exceptions['step_1']).to include(/undefined method.*foo=/) }
         end
+
+        context 'when defaulting to params reader' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              params_reader :foo, default: 'foo'
+
+              step :step_1
+              step :step_2
+
+              def step_1
+                self.foo
+              end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect(subject.output).to eq('foo') }
+        end
       end
     end
 
