@@ -3,7 +3,6 @@
 module Opera
   module Operation
     class Base
-      extend Gem::Deprecate
       include Opera::Operation::Builder
 
       attr_accessor :context
@@ -20,12 +19,6 @@ module Opera
       def config
         self.class.config
       end
-
-      def finish
-        finish!
-      end
-
-      deprecate :finish, :finish!, 2019, 6
 
       def finish!
         @finished = true
@@ -53,6 +46,39 @@ module Opera
 
         def reporter
           config.reporter
+        end
+
+        def check_method_availability!(method)
+          return if instance_methods(false).none?(method)
+
+          raise(ArgumentError, "Method #{method} is already defined")
+        end
+
+        %i[context params dependencies].each do |method|
+          define_method("#{method}_reader") do |*attributes, **options|
+            attributes.map(&:to_sym).each do |attribute|
+              check_method_availability!(attribute)
+
+              define_method(attribute) do
+                send(method)[attribute] ||= options[:default]
+              end
+            end
+          end
+
+          define_method("#{method}_writer") do |*attributes|
+            attributes.map(&:to_sym).each do |attribute|
+              check_method_availability!("#{attribute}=")
+
+              define_method("#{attribute}=") do |value|
+                send(method)[attribute] = value
+              end
+            end
+          end
+
+          define_method("#{method}_accessor") do |*attributes, **options|
+            send("#{method}_reader", *attributes, **options)
+            send("#{method}_writer", *attributes)
+          end
         end
       end
     end
