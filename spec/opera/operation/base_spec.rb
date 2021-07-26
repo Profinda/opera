@@ -35,6 +35,137 @@ module Opera
 
     subject { operation_class.call }
 
+    describe 'dynamic attributes' do
+      describe '.reader' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            context_reader :foo
+            context_reader :bar, default: 'Z'
+
+            step :step_1
+            step :step_2
+
+            def step_1
+              context[:foo] = 'a'
+            end
+
+            def step_2
+              result.output = "#{foo}#{bar}"
+            end
+          end
+        end
+
+        it { expect(subject.output).to eq('aZ') }
+      end
+
+      describe '.writer' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            context_writer :foo
+            context_writer :bar
+
+            step :step_1
+            step :step_2
+
+            def step_1
+              self.foo = 'a'
+              self.bar = 'ZZZ'
+            end
+
+            def step_2
+              result.output = "#{context[:foo]}#{context[:bar]}"
+            end
+          end
+        end
+
+        it { expect(subject.output).to eq('aZZZ') }
+      end
+
+      describe '.accessor' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            context_accessor :foo, default: 'aaa'
+            context_accessor :bar
+
+            step :step_1
+            step :step_2
+
+            def step_1
+              self.bar = 'ZZZ'
+            end
+
+            def step_2
+              result.output = "#{foo}#{bar}"
+            end
+          end
+        end
+
+        it { expect(subject.output).to eq('aaaZZZ') }
+      end
+
+      context 'for edge cases' do
+        context 'when define the same method twice' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :foo
+              params_reader :foo
+
+              step :step_1
+              step :step_2
+
+              def step_1; end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect { subject.output }.to raise_error('Method foo is already defined') }
+        end
+
+        context 'when define writer to params or dependencies' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              params_writer :foo
+
+              step :step_1
+              step :step_2
+
+              def step_1; end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect { subject.output }.to raise_error(/undefined method.+params_writer/) }
+        end
+
+        context 'when writing to reader' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_reader :foo, default: 'foo'
+
+              step :step_1
+              step :step_2
+
+              def step_1
+                self.foo = 'bar'
+              end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect(subject.exceptions['step_1']).to include(/undefined method.*foo=/) }
+        end
+      end
+    end
+
     describe '.instructions' do
       it {
         expect(operation_class.instructions).to eq([

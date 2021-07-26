@@ -1,6 +1,18 @@
 require "bundler/setup"
 require "opera"
 
+class BasicLogger
+  %i[error info warn debug log fatal].each do |name|
+    define_method(name) do |*args|
+      puts "[#{name.upcase}] #{args.join("\n").inspect}"
+    end
+  end
+end
+
+Opera::Operation::Config.configure do |config|
+  config.reporter = BasicLogger.new
+end
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"

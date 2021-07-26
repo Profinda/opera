@@ -156,6 +156,9 @@ Some cases and example how to use new operations
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :create
@@ -169,15 +172,15 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(params)
+    self.profile = current_account.profiles.create(params)
   end
 
   def send_email
-    dependencies[:mailer]&.send_mail(profile: context[:profile])
+    mailer&.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -226,6 +229,9 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :create
@@ -241,16 +247,17 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(context[:profile_schema_output])
+    self.profile = current_account.profiles.create(context[:profile_schema_output])
   end
 
   def send_email
-    return true unless dependencies[:mailer]
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    return true unless mailer
+
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -272,6 +279,9 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :build_record
@@ -287,29 +297,29 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def build_record
-    context[:profile] = dependencies[:current_account].profiles.build(params)
-    context[:profile].force_name_validation = true
+    self.profile = current_account.profiles.build(params)
+    self.profile.force_name_validation = true
   end
 
   def old_validation
-    return true if context[:profile].valid?
+    return true if profile.valid?
 
     result.add_information(missing_validations: "Please check dry validations")
-    result.add_errors(context[:profile].errors.messages)
+    result.add_errors(profile.errors.messages)
 
     false
   end
 
   def create
-    context[:profile].save
+    profile.save
   end
 
   def send_email
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -345,6 +355,9 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :build_record
@@ -360,8 +373,8 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def build_record
-    context[:profile] = dependencies[:current_account].profiles.build(params)
-    context[:profile].force_name_validation = true
+    self.profile = current_account.profiles.build(params)
+    self.profile.force_name_validation = true
   end
 
   def exception
@@ -369,21 +382,23 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = context[:profile].save
+    self.profile = profile.save
   end
 
   def send_email
-    return true unless dependencies[:mailer]
+    return true unless mailer
 
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output(model: context[:profile])
+    result.output(model: profile)
   end
 end
 ```
+
 ##### Call with step throwing exception
+
 ```ruby
 result = Profile::Create.call(params: {
   first_name: :foo,
@@ -399,6 +414,9 @@ result = Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :build_record
@@ -413,27 +431,29 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def build_record
-    context[:profile] = dependencies[:current_account].profiles.build(params)
-    context[:profile].force_name_validation = true
+    self.profile = current_account.profiles.build(params)
+    self.profile.force_name_validation = true
   end
 
   def create
-    context[:profile] = context[:profile].save
-    finish
+    self.profile = profile.save
+    finish!
   end
 
   def send_email
-    return true unless dependencies[:mailer]
+    return true unless mailer
 
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output(model: context[:profile])
+    result.output(model: profile)
   end
 end
 ```
+
 ##### Call
+
 ```ruby
 result = Profile::Create.call(params: {
   first_name: :foo,
@@ -453,6 +473,9 @@ class Profile::Create < Opera::Operation::Base
     config.transaction_class = Profile
   end
 
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   transaction do
@@ -470,21 +493,21 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(params)
+    self.profile = current_account.profiles.create(params)
   end
 
   def update
-    context[:profile].update(example_attr: :Example)
+    profile.update(example_attr: :Example)
   end
 
   def send_email
-    return true unless dependencies[:mailer]
+    return true unless mailer
 
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -515,6 +538,9 @@ class Profile::Create < Opera::Operation::Base
     config.transaction_class = Profile
   end
 
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   transaction do
@@ -532,21 +558,21 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(params)
+    self.profile = current_account.profiles.create(params)
   end
 
   def update
-    context[:profile].update(updated_at: 1.day.ago)
+    profile.update(updated_at: 1.day.ago)
   end
 
   def send_email
-    return true unless dependencies[:mailer]
+    return true unless mailer
 
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -573,6 +599,9 @@ D, [2020-08-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   step :create
@@ -590,21 +619,21 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(params)
+    self.profile = current_account.profiles.create(params)
   end
 
   def update
-    context[:profile].update(updated_at: 1.day.ago)
+    profile.update(updated_at: 1.day.ago)
   end
 
   def send_email
-    return true unless dependencies[:mailer]
+    return true unless mailer
 
-    dependencies[:mailer].send_mail(profile: context[:profile])
+    mailer.send_mail(profile: profile)
   end
 
   def output
-    result.output = { model: context[:profile] }
+    result.output = { model: profile }
   end
 end
 ```
@@ -625,6 +654,9 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
+  context_accessor :profile
+  dependencies_reader :current_account, :mailer
+
   validate :profile_schema
 
   success :populate
@@ -649,17 +681,17 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    context[:profile] = dependencies[:current_account].profiles.create(params)
+    self.profile = current_account.profiles.create(params)
   end
 
   def update
-    context[:profile].update(updated_at: 1.day.ago)
+    profile.update(updated_at: 1.day.ago)
   end
 
   # NOTE: We can add an error in this step and it won't break the execution
   def send_email
     result.add_error('mailer', 'Missing dependency')
-    dependencies[:mailer]&.send_mail(profile: context[:profile])
+    mailer&.send_mail(profile: profile)
   end
 
   def output
@@ -792,6 +824,8 @@ Opera::Operation::Result.new(output: 'success')
 
 ## Opera::Operation::Base - Class Methods
 >
+    - context_[reader|writer|accessor] - predefined methods for easy access
+    - [params|dependencies]_reader     - predefined readers for immutable arguments
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
@@ -811,7 +845,7 @@ Opera::Operation::Result.new(output: 'success')
     - context [Hash]          - used to pass information between steps - only for internal usage
     - params [Hash]           - immutable and received in call method
     - dependencies [Hash]     - immutable and received in call method
-    - finish                  - this method interrupts the execution of steps after is invoked
+    - finish!                 - this method interrupts the execution of steps after is invoked
 
 ## Development
 

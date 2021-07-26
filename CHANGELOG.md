@@ -1,13 +1,18 @@
 # Opera Changelog
 
-## 0.1.0 - September 12, 2020
+### 0.2.3 - July 26, 2021
 
-- Initial release
+- Support context, params and dependencies accessors
+- Removed depreceted `finish` method. Please use `finish!` from today
+
+## 0.2.2 - July 7, 2021
+
+- Test release using Github Actions
 
 ## 0.2.1 - July 7, 2021
 
 - Support for transaction options
 
-## 0.2.2 - July 7, 2021
+## 0.1.0 - September 12, 2020
 
-- Test release using Github Actions
+- Initial release
