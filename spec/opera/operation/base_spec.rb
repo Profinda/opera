@@ -108,7 +108,7 @@ module Opera
           let(:operation_class) do
             Class.new(Operation::Base) do
               context_accessor :foo
-              params_accessor :foo
+              params_reader :foo
 
               step :step_1
               step :step_2
@@ -122,6 +122,25 @@ module Opera
           end
 
           it { expect { subject.output }.to raise_error('Method foo is already defined') }
+        end
+
+        context 'when define writer to params or dependencies' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              params_writer :foo
+
+              step :step_1
+              step :step_2
+
+              def step_1; end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect { subject.output }.to raise_error(/undefined method.+params_writer/) }
         end
       end
     end

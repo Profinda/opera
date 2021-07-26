@@ -64,7 +64,9 @@ module Opera
               end
             end
           end
+        end
 
+        %i[context].each do |method|
           define_method("#{method}_writer") do |*attributes|
             attributes.map(&:to_sym).each do |attribute|
               check_method_availability!("#{attribute}=")

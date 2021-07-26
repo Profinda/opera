@@ -824,7 +824,8 @@ Opera::Operation::Result.new(output: 'success')
 
 ## Opera::Operation::Base - Class Methods
 >
-    - [context|params|dependencies]_[reader|writer|accessor] - predefined methods for easy access
+    - context_[reader|writer|accessor] - predefined methods for easy access
+    - [params|dependencies]_reader     - predefined readers for immutable arguments
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
