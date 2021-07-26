@@ -142,6 +142,27 @@ module Opera
 
           it { expect { subject.output }.to raise_error(/undefined method.+params_writer/) }
         end
+
+        context 'when writing to reader' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_reader :foo, default: 'foo'
+
+              step :step_1
+              step :step_2
+
+              def step_1
+                self.foo = 'bar'
+              end
+
+              def step_2
+                result.output = foo
+              end
+            end
+          end
+
+          it { expect(subject.exceptions['step_1']).to include(/undefined method.*foo=/) }
+        end
       end
     end
 
