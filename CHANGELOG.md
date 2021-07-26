@@ -3,7 +3,7 @@
 ### 0.2.3 - July 26, 2021
 
 - Support context, params and dependencies accessors
-- Removed depreceted `finish` method
+- Removed depreceted `finish` method. Please use `finish!` from today
 
 ## 0.2.2 - July 7, 2021
 
