@@ -40,7 +40,7 @@ module Opera
         let(:operation_class) do
           Class.new(Operation::Base) do
             context_reader :foo
-            context_reader :bar, default: 'Z'
+            context_reader :bar, default: -> { 'Z' }
 
             step :step_1
             step :step_2
@@ -84,7 +84,7 @@ module Opera
       describe '.accessor' do
         let(:operation_class) do
           Class.new(Operation::Base) do
-            context_accessor :foo, default: 'aaa'
+            context_accessor :foo, default: -> { 'aaa' }
             context_accessor :bar
 
             step :step_1
@@ -146,7 +146,7 @@ module Opera
         context 'when writing to reader' do
           let(:operation_class) do
             Class.new(Operation::Base) do
-              context_reader :foo, default: 'foo'
+              context_reader :foo, default: -> { 'foo' }
 
               step :step_1
               step :step_2
@@ -167,7 +167,7 @@ module Opera
         context 'when defaulting to params reader' do
           let(:operation_class) do
             Class.new(Operation::Base) do
-              params_reader :foo, default: 'foo'
+              params_reader :foo, default: -> { bar }
 
               step :step_1
               step :step_2
@@ -179,10 +179,39 @@ module Opera
               def step_2
                 result.output = foo
               end
+
+              def bar
+                'foo'
+              end
             end
           end
 
           it { expect(subject.output).to eq('foo') }
+        end
+
+        context 'when calling operation twice' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :foo, default: -> { {} }
+
+              step :step_1
+              step :step_2
+
+              def step_1
+                self.foo[Kernel.rand * 1000] = 'foo'
+              end
+
+              def step_2
+                result.output = self.foo
+              end
+            end
+          end
+
+          it 'does NOT share default values between calls' do
+            expect(operation_class.call.output.keys.size).to eq(1)
+            expect(operation_class.call.output.keys.size).to eq(1)
+            expect(operation_class.call.output.keys.size).to eq(1)
+          end
         end
       end
     end
