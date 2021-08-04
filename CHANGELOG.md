@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.5 - August 3, 2021
+
+- make sure that `default` option in accessors is always lambda
+
 ### 0.2.4 - July 26, 2021
 
 - prevent default from overwrite falsy values
