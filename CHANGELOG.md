@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.6 - October 29, 2021
+
+- New method Result#failures that returns combined errors and exceptions
+
 ### 0.2.5 - August 3, 2021
 
 - make sure that `default` option in accessors is always lambda

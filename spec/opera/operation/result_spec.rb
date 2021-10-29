@@ -16,6 +16,17 @@ module Opera
       it { is_expected.to be_success }
     end
 
+    describe '#failures' do
+      before do
+        subject.add_error(:foo1, :bar1)
+        subject.add_exception(:foo2, :bar2)
+      end
+
+      it 'returns errors and exceptions combined' do
+        expect(subject.failures).to eq(foo1: [:bar1], 'foo2' => [:bar2])
+      end
+    end
+
     describe '#output=' do
       before { subject.output = :example }
 

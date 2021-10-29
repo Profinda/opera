@@ -28,6 +28,10 @@ module Opera
         !failure?
       end
 
+      def failures
+        errors.merge(exceptions)
+      end
+
       # rubocop:disable Metrics/MethodLength
       def add_error(field, message)
         @errors[field] ||= []
