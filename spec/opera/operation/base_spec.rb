@@ -1094,6 +1094,46 @@ module Opera
           end
         end
       end
+
+      context 'for finish_if' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1
+            finish_if :condition_1
+            step :step_2
+            finish_if :condition_2
+            step :step_5
+
+            def step_1
+              false
+            end
+
+            def condition_1
+              nil
+            end
+
+            def step_2
+              'foo'
+            end
+
+            def condition_2
+              true
+            end
+
+            def step_5
+              true
+            end
+          end
+        end
+
+        it 'ends with success' do
+          expect(subject).to be_success
+        end
+
+        it 'executions stop on step_2' do
+          expect(subject.executions).to match_array(%i[step_1 condition_1 step_2 condition_2])
+        end
+      end
     end
   end
 end
