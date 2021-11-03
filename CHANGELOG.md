@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.7 - October 29, 2021
+
+- Adds `finish_if` step to DSL
+
 ### 0.2.6 - October 29, 2021
 
 - New method Result#failures that returns combined errors and exceptions

@@ -3,7 +3,7 @@
 module Opera
   module Operation
     module Builder
-      INSTRUCTIONS = %I[validate transaction benchmark step success operation operations].freeze
+      INSTRUCTIONS = %I[validate transaction benchmark step success finish_if operation operations].freeze
 
       def self.included(base)
         base.extend(ClassMethods)
