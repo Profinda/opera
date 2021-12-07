@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    opera (0.2.7)
+    opera (0.2.8)
 
 GEM
   remote: https://rubygems.org/
@@ -81,4 +81,4 @@ DEPENDENCIES
   rspec (~> 3.0)
 
 BUNDLED WITH
-   2.2.15
+   2.2.32
