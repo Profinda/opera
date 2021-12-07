@@ -559,6 +559,31 @@ module Opera
         end
       end
 
+      context 'for accessors/readers' do
+        subject { operation_class.call(params: {}, dependencies: {}) }
+
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            params_reader :bar, default: -> { :bar }
+            dependencies_reader :foo, default: -> { :foo }
+            context_reader :baz
+
+            step :step_1
+            step :step_2
+
+            def step_1; end
+
+            def step_2
+              result.output = [foo, bar, baz]
+            end
+          end
+        end
+
+        it 'returns default values' do
+          expect(subject.output).to eq([:foo, :bar, nil])
+        end
+      end
+
       context 'for output' do
         let(:operation_class) do
           Class.new(Operation::Base) do

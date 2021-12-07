@@ -60,7 +60,11 @@ module Opera
               check_method_availability!(attribute)
 
               define_method(attribute) do
-                value = send(method).key?(attribute) ? send(method)[attribute] : self.instance_exec(&options[:default])
+                value = if send(method).key?(attribute)
+                          send(method)[attribute]
+                        elsif options[:default]
+                          instance_exec(&options[:default])
+                        end
 
                 if send(method).frozen?
                   send(method)[attribute] || value

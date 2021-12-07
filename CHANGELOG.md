@@ -1,5 +1,10 @@
 # Opera Changelog
 
+### 0.2.8 - December 7, 2021
+
+- Fix issue with default value
+- Update Readme
+
 ### 0.2.7 - October 29, 2021
 
 - Adds `finish_if` step to DSL

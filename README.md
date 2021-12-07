@@ -702,7 +702,7 @@ class Profile::Create < Opera::Operation::Base
 end
 ```
 
-#### Example with information (real and total) from benchmark
+#### Example output for success block
 
 ```ruby
 Profile::Create.call(params: {
