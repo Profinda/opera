@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.9 - May 16, 2022
+
+- Improve executions for failing operations
+
 ### 0.2.8 - December 7, 2021
 
 - Fix issue with default value

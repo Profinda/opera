@@ -12,12 +12,13 @@ module Opera
 
             if operation_result.success?
               add_instruction_output(instruction, operation_result.output)
-              execution = result.executions.pop
-              result.executions << { execution => operation_result.executions }
             else
               result.add_errors(operation_result.errors)
               result.add_exceptions(operation_result.exceptions)
             end
+
+            execution = result.executions.pop
+            result.executions << { execution => operation_result.executions }
           end
 
           private
