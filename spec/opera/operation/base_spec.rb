@@ -860,10 +860,13 @@ module Opera
         let(:failing_operation) do
           Class.new(Operation::Base) do
             step :step_1
+            step :step_2
 
             def step_1
               result.add_error(:base, 'Inner error')
             end
+
+            def step_2; end
           end
         end
 
@@ -903,6 +906,10 @@ module Opera
 
           it 'adds inner errors into the result' do
             expect(subject.errors).to have_key(:base)
+          end
+
+          it 'adds contains the inner executions in the executions array' do
+            expect(subject.executions).to eq([{ operation_1: [:step_1] }])
           end
         end
 
