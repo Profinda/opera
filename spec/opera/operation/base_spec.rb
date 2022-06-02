@@ -811,6 +811,11 @@ module Opera
           it 'ends with success' do
             expect(subject).to be_success
           end
+
+          it 'never calls TransactionRollback' do
+            expect_any_instance_of(Opera::Operation::Instructions::Executors::Transaction).to_not receive(:transaction_error)
+            subject
+          end
         end
 
         context 'for transaction options' do

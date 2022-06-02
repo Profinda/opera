@@ -12,11 +12,11 @@ module Opera
             transaction_class.send(*arguments) do
               super
 
-              return if !operation.finished? && result.success?
+              return if result.success?
 
-              raise(RollbackTransactionError)
+              raise(transaction_error)
             end
-          rescue RollbackTransactionError
+          rescue transaction_error
             nil
           end
 
@@ -30,6 +30,10 @@ module Opera
 
           def transaction_options
             config.transaction_options
+          end
+
+          def transaction_error
+            RollbackTransactionError
           end
         end
       end

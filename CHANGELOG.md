@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.10 - June 1, 2022
+
+- `finish!` does not break transaction
+
 ### 0.2.9 - May 16, 2022
 
 - Improve executions for failing operations
