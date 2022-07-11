@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.11 - June 1, 2022
+
+- handle internally exceptions from schema
+
 ### 0.2.10 - June 1, 2022
 
 - `finish!` does not break transaction

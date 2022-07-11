@@ -12,7 +12,8 @@ module Opera
             operation.send(method)
           rescue StandardError => exception
             reporter&.error(exception)
-            operation.result.add_exception(method, exception.message, classname: operation.class.name)
+            operation.result.add_exception(method, "#{exception.message}, for #{operation.inspect}", classname: operation.class.name)
+            operation.result
           end
         end
       end

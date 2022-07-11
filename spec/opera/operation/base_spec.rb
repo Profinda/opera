@@ -253,72 +253,102 @@ module Opera
       subject { operation_class.call(params: params, dependencies: dependencies) }
 
       context 'for validations' do
-        let(:operation_class) do
-          Class.new(Operation::Base) do
-            validate do
-              step :validation_1
-              step :validation_2
-            end
-            step :step_1
+        context 'when validation method returns unexpected object' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              validate do
+                step :validation_1
+                step :validation_2
+              end
+              step :step_1
 
-            def step_1; end
+              def validation_1
+                raise 'exception message'
+              end
 
-            def validation_1
-              Class.new(Dry::Validation::Contract) do
-                params do
-                  required(:profile_id).filled(:int?)
-                end
-              end.new.call(params)
-            end
+              def validation_2
+                'unexpected string'
+              end
 
-            def validation_2
-              Class.new(Dry::Validation::Contract) do
-                params do
-                  required(:profile_id).filled(eql?: 102)
-                end
-              end.new.call(params)
+              def step_1; end
             end
           end
-        end
 
-        context 'when passing' do
-          let(:params) do
-            {
-              profile_id: 102
-            }
-          end
-
-          it 'calls validations' do
-            expect(subject).to be_success
-            expect(subject.errors).to be_empty
-          end
-
-          it 'calls steps' do
-            expect_any_instance_of(operation_class).to receive(:step_1)
-            subject
-          end
-        end
-
-        context 'when failing' do
-          let(:params) do
-            {
-              profile_id: :example
-            }
-          end
-
-          it 'calls validations' do
+          it 'handles exception' do
             expect(subject).to be_failure
-            expect(subject.errors).to eq(profile_id: ['must be an integer', 'must be equal to 102'])
+            expect(subject.exceptions["validation_1"]).to include(/exception message/)
+            expect(subject.exceptions["validation_2"]).to include(/String is not expected object/)
+          end
+        end
+
+        context 'when validation method returns Dry::Validation::Result' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              validate do
+                step :validation_1
+                step :validation_2
+              end
+              step :step_1
+
+              def step_1; end
+
+              def validation_1
+                Class.new(Dry::Validation::Contract) do
+                  params do
+                    required(:profile_id).filled(:int?)
+                  end
+                end.new.call(params)
+              end
+
+              def validation_2
+                Class.new(Dry::Validation::Contract) do
+                  params do
+                    required(:profile_id).filled(eql?: 102)
+                  end
+                end.new.call(params)
+              end
+            end
           end
 
-          it 'calls call validations' do
-            expect_any_instance_of(operation_class).to receive(:validation_2).and_call_original
-            subject
+          context 'when passing' do
+            let(:params) do
+              {
+                profile_id: 102
+              }
+            end
+
+            it 'calls validations' do
+              expect(subject).to be_success
+              expect(subject.errors).to be_empty
+            end
+
+            it 'calls steps' do
+              expect_any_instance_of(operation_class).to receive(:step_1)
+              subject
+            end
           end
 
-          it 'never calls step' do
-            expect_any_instance_of(operation_class).to_not receive(:step_1)
-            subject
+          context 'when failing' do
+            let(:params) do
+              {
+                profile_id: :example
+              }
+            end
+
+            it 'calls validations' do
+              expect(subject).to be_failure
+              expect(subject.errors).to eq(profile_id: ['must be an integer', 'must be equal to 102'])
+            end
+
+            it 'calls call validations' do
+              expect_any_instance_of(operation_class).to receive(:validation_2).and_call_original
+              subject
+            end
+
+            it 'never calls step' do
+              expect_any_instance_of(operation_class).to_not receive(:step_1)
+              subject
+            end
           end
         end
       end
@@ -421,7 +451,7 @@ module Opera
             expect_any_instance_of(operation_class).to_not receive(:step_2)
             expect(subject.executions).to match_array(%i[step_1])
             expect(subject).to be_failure
-            expect(subject.exceptions).to eq('step_1' => ['Example'])
+            expect(subject.exceptions).to match(a_hash_including('step_1' => include(include('Example'))))
           end
         end
       end
@@ -529,7 +559,7 @@ module Opera
             expect_any_instance_of(operation_class).to receive(:step_2).and_call_original
             expect(subject.executions).to match_array(%i[step_1 step_2])
             expect(subject).to be_failure
-            expect(subject.exceptions).to eq('MyClass#step_1' => ['Example'])
+            expect(subject.exceptions).to match(a_hash_including('MyClass#step_1' => include(include('Example'))))
           end
         end
       end
@@ -759,7 +789,7 @@ module Opera
           end
 
           it 'keeps track on exceptions' do
-            expect(subject.exceptions).to include('step_3' => ['example'])
+            expect(subject.exceptions).to match(a_hash_including('step_3' => include(include('example'))))
           end
 
           it 'evaluates 3 steps' do
