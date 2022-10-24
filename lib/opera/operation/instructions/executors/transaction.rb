@@ -12,9 +12,7 @@ module Opera
             transaction_class.send(*arguments) do
               super
 
-              return if result.success?
-
-              raise(transaction_error)
+              raise(transaction_error) if result.failure?
             end
           rescue transaction_error
             nil
