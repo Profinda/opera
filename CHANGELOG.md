@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.12 - Oct 24, 2022
+
+- added support for JRuby
+
 ### 0.2.11 - June 1, 2022
 
 - handle internally exceptions from schema
