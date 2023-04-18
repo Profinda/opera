@@ -49,13 +49,7 @@ module Opera
       # rubocop:enable Metrics/MethodLength
 
       def add_errors(errors)
-        errors_hash = if errors.is_a?(ActiveModel::Errors)
-                        errors.messages
-                      else
-                        errors.to_h
-                      end
-
-        errors_hash.each_pair do |key, value|
+        errors.to_hash.each_pair do |key, value|
           add_error(key, value)
         end
       end

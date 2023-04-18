@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'active_model/errors'
 
 module Opera
   RSpec.describe Operation::Result, type: :operation do
@@ -76,6 +77,26 @@ module Opera
 
         it { expect(subject.errors).to include(result) }
         it { expect(subject.errors).to include(result2) }
+      end
+
+      context 'when errors are ActiveModel::Errors instead of a hash' do
+        let(:result3) do
+          {
+            example5: ['Example5'],
+            example6: ['Example6']
+          }
+        end
+        let(:errors_object) do
+          errors = ::ActiveModel::Errors.new({})
+
+          result3.each do |k, v|
+            errors.add(k, v)
+          end
+        end
+
+        before { subject.add_errors(errors_object) }
+
+        it { expect(subject.errors).to include(result3) }
       end
     end
 
