@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'active_model/errors'
 
 module Opera
   RSpec.describe Operation::Result, type: :operation do
@@ -86,15 +85,14 @@ module Opera
             example6: ['Example6']
           }
         end
-        let(:errors_object) do
-          errors = ::ActiveModel::Errors.new({})
 
-          result3.each do |k, v|
-            errors.add(k, v)
-          end
+        before do
+          errors_object = double('ActiveRecord::Errors')
+
+          allow(errors_object).to receive(:to_hash) { result3 }
+
+          subject.add_errors(errors_object)
         end
-
-        before { subject.add_errors(errors_object) }
 
         it { expect(subject.errors).to include(result3) }
       end

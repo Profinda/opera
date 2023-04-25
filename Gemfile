@@ -7,7 +7,6 @@ gem 'rake', '~> 12.0'
 gem 'rspec', '~> 3.0'
 
 group :test, :development do
-  gem 'activemodel', '7.0.4'
   gem 'dry-validation'
   gem 'pry-byebug', require: false, platform: :ruby
   gem 'pry-nav', require: false, platform: :jruby
