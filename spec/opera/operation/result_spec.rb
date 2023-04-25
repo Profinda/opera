@@ -77,6 +77,25 @@ module Opera
         it { expect(subject.errors).to include(result) }
         it { expect(subject.errors).to include(result2) }
       end
+
+      context 'when errors are ActiveModel::Errors instead of a hash' do
+        let(:result3) do
+          {
+            example5: ['Example5'],
+            example6: ['Example6']
+          }
+        end
+
+        before do
+          errors_object = double('ActiveRecord::Errors')
+
+          allow(errors_object).to receive(:to_hash) { result3 }
+
+          subject.add_errors(errors_object)
+        end
+
+        it { expect(subject.errors).to include(result3) }
+      end
     end
 
     describe '#add_exception' do

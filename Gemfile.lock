@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    opera (0.2.11)
+    opera (0.2.14)
 
 GEM
   remote: https://rubygems.org/
@@ -77,6 +77,7 @@ DEPENDENCIES
   dry-validation
   opera!
   pry-byebug
+  pry-nav
   rake (~> 12.0)
   rspec (~> 3.0)
 

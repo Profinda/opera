@@ -49,7 +49,7 @@ module Opera
       # rubocop:enable Metrics/MethodLength
 
       def add_errors(errors)
-        errors.to_h.each_pair do |key, value|
+        errors.to_hash.each_pair do |key, value|
           add_error(key, value)
         end
       end

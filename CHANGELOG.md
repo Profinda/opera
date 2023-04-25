@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.14 - April 25, 2023
+
+- Added support for objects responding to `to_hash` method in error handling for easier integration with Rails.
+
 ### 0.2.13 - October 24, 2022
 
 - Avoid return inside transaction block to support activegraph with jruby
