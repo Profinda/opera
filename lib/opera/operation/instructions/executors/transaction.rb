@@ -8,13 +8,19 @@ module Opera
           class RollbackTransactionError < Opera::Error; end
 
           def call(instruction)
-            transaction_class.send(transaction_method, **transaction_options) do
+            transaction_wrapper do
               super
 
               raise(transaction_error) if result.failure?
             end
           rescue transaction_error
             nil
+          end
+
+          def transaction_wrapper
+            return transaction_class.send(transaction_method) { yield } unless transaction_options
+
+            transaction_class.send(transaction_method, **transaction_options) { yield }
           end
 
           def transaction_class
@@ -26,7 +32,7 @@ module Opera
           end
 
           def transaction_options
-            config.transaction_options || {}
+            config.transaction_options
           end
 
           def transaction_error
