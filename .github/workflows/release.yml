@@ -12,12 +12,9 @@ jobs:
         ruby-version: [ '2.6', '2.7', '3.0', '3.2', 'jruby' ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Ruby
-        # To automatically get bug fixes and new Ruby versions for ruby/setup-ruby,
-        # change this to (see https://github.com/ruby/setup-ruby#versioning):
-        # uses: ruby/setup-ruby@v1
-        uses: ruby/setup-ruby@473e4d8fe5dd94ee328fdfca9f8c9c7afc9dae5e
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: false # runs 'bundle install' and caches installed gems automatically
@@ -31,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Tag automatically
         run: git tag v`cat lib/opera/version.rb | grep 'VERSION' | awk '{ print $3 $4 }' | sed "s/'//g"`
@@ -48,7 +45,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Ruby 3.2
         uses: ruby/setup-ruby@v1
         with:
