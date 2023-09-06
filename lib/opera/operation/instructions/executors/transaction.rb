@@ -18,8 +18,6 @@ module Opera
           end
 
           def transaction_wrapper
-            return transaction_class.send(transaction_method) { yield } unless transaction_options
-
             transaction_class.send(transaction_method, **transaction_options) { yield }
           end
 
