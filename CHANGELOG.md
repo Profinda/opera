@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.15 - September 4, 2023
+
+- Make the Transaction executor work with the keyword arguments
+
 ### 0.2.14 - April 25, 2023
 
 - Added support for objects responding to `to_hash` method in error handling for easier integration with Rails.

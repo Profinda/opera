@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby-version: [ '2.6', '2.7', '3.0', 'jruby' ]
+        ruby-version: [ '2.6', '2.7', '3.0', '3.2', 'jruby' ]
 
     steps:
       - uses: actions/checkout@v2
@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Ruby 2.7
+      - name: Set up Ruby 3.2
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
+          ruby-version: 3.2
 
       - name: Publish to RubyGems
         run: |
