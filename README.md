@@ -885,9 +885,147 @@ Opera::Operation::Result.new(output: 'success')
     - add_exceptions(Hash)     - Adds multiple exceptions
     - add_information(Hash)    - Adss new information - Useful informations for developers
 
-## Opera::Operation::Base - Class Methods
+## Opera::Operation::Base - Instance Methods
 >
-    - context_[reader|writer|accessor] - predefined methods for easy access
+    - context [Hash]          - used to pass information between steps - only for internal usage
+    - params [Hash]           - immutable and received in call method
+    - dependencies [Hash]     - immutable and received in call method
+    - finish!                 - this method interrupts the execution of steps after is invoked
+
+## Opera::Operation::Base - Class Methods
+
+#### `context_reader`
+
+The `context_reader` helper method is designed to facilitate easy access to specified keys within a `context` hash. It dynamically defines a method that acts as a getter for the value associated with a specified key, simplifying data retrieval.
+
+#### Parameters
+**key (Symbol):** The key(s) for which the getter and setter methods are to be created. These symbols should correspond to keys in the context hash.
+
+**default (Proc, optional):** A lambda or proc that returns a default value for the key if it is not present in the context hash. This proc is lazily evaluated only when the getter is invoked and the key is not present in the hash.
+
+#### Usage
+
+**GOOD**
+
+```ruby
+# USE context_reader to read steps outputs from the context hash
+
+context_reader :schema_output
+
+validate :schema # context = { schema_output: { id: 1 } }
+step :do_something
+
+def do_something
+  puts schema_output  # outputs: { id: 1 }
+end
+```
+
+```ruby
+# USE context_reader with 'default' option to provide default value when key is missing in the context hash
+
+context_reader :profile, default: -> { Profile.new }
+
+step :fetch_profile
+step :do_something
+
+def fetch_profile
+  return if App.http_disabled?
+
+  context[:profile] = ProfileFetcher.call
+end
+
+def update_profile
+  profile.name = 'John'
+  profile.save!
+end
+```
+
+**BAD**
+
+```ruby
+# Using `context_reader` to create read-only methods that instantiate objects,
+# especially when these objects are not stored or updated in the `context` hash, is not recommended.
+# This approach can lead to confusion and misuse of the context hash,
+# as it suggests that the object might be part of the persistent state.
+context_reader :serializer, default: -> { ProfileSerializer.new }
+
+step :output
+
+def output
+  self.result = serializer.to_json({...})
+end
+
+
+# A better practice is to use private methods to define read-only access to resources
+# that are instantiated on the fly and not intended for storage in any state context.
+
+step :output
+
+def output
+  self.result = serializer.to_json({...})
+end
+
+private
+
+def serializer
+  ProfileSerializer.new
+end
+```
+**Conclusion**
+
+For creating instance methods that are meant to be read-only and not stored within a context hash, defining these methods as private is a more suitable and clear approach compared to using context_reader with a default. This method ensures that transient dependencies remain well-encapsulated and are not confused with persistent application state.
+
+#### `context_writer`
+
+The `context_writer` helper method is designed to enable setting of values for specified keys within a `context` hash. This method dynamically defines a method that acts as a setter, allowing for the direct modification of the value associated with a given key.
+
+#### Usage
+```ruby
+context_writer :profile
+
+step :fetch_profile
+
+def fetch_profile
+  self.profile = ProfileFetcher.call # sets context[:profile]
+end
+```
+
+#### `context_accessor`
+
+The `context_accessor` helper method is designed to enable easy access to and modification of values for specified keys within a `context` hash. This method dynamically defines both getter and setter methods for the designated keys, facilitating straightforward retrieval and update of values.
+
+#### Parameters
+
+**key (Symbol):** The key(s) for which the getter and setter methods are to be created. These symbols will correspond to keys in the context hash.
+
+**default (Proc, optional):** A lambda or proc that returns a default value for the key if it is not present in the context hash. This proc is lazily evaluated only when the getter is invoked and the key is not present in the hash.
+
+#### Usage
+```ruby
+context_accessor :profile
+
+step :fetch_profile
+step :update_profile
+
+def fetch_profile
+  self.profile = ProfileFetcher.call # sets context[:profile]
+end
+
+def update_profile
+  profile.update!(name: 'John') # reads profile from context[:profile]
+end
+```
+
+```ruby
+context_accessor :profile, default: -> { Profile.new }
+```
+
+```ruby
+context_accessor :profile, :account
+```
+
+#### Other methods
+>
     - [params|dependencies]_reader     - predefined readers for immutable arguments
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
@@ -902,13 +1040,6 @@ Opera::Operation::Result.new(output: 'success')
       - return [False|Exception] - stops operation execution and breaks transaction/do rollback
     - call(params: Hash, dependencies: Hash?)
       - return [Opera::Operation::Result] - never raises an exception
-
-## Opera::Operation::Base - Instance Methods
->
-    - context [Hash]          - used to pass information between steps - only for internal usage
-    - params [Hash]           - immutable and received in call method
-    - dependencies [Hash]     - immutable and received in call method
-    - finish!                 - this method interrupts the execution of steps after is invoked
 
 ## Development
 
