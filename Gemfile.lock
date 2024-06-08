@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    opera (0.2.15)
+    opera (0.2.16)
 
 GEM
   remote: https://rubygems.org/

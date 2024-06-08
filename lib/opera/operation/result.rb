@@ -71,7 +71,15 @@ module Opera
       end
 
       def add_execution(step)
+        return if config.production_mode?
+
         @executions << step
+      end
+
+      private
+
+      def config
+        Config
       end
     end
   end

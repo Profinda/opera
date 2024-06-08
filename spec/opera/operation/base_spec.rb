@@ -35,6 +35,49 @@ module Opera
 
     subject { operation_class.call }
 
+    describe '.configration' do
+      context '#mode' do
+        context 'when setting incorrect mode' do
+          before do
+            Operation::Config.configure do |config|
+              config.mode = :invalid
+            end
+          end
+
+          after do
+            Operation::Config.configure do |config|
+              config.mode = :development
+            end
+          end
+
+          it 'raises exception' do
+            puts Opera::Operation::Config.mode
+            expect { subject.output }.to raise_error(/Mode is incorrect. Can be either: development or production/)
+          end
+        end
+
+        context 'when in production mode' do
+          context 'for #executions' do
+            before do
+              Operation::Config.configure do |config|
+                config.mode = :production
+              end
+            end
+
+            after do
+              Operation::Config.configure do |config|
+                config.mode = :development
+              end
+            end
+
+            it 'does NOT store executions' do
+              expect(subject.executions).to be_empty
+            end
+          end
+        end
+      end
+    end
+
     describe 'dynamic attributes' do
       describe '.reader' do
         let(:operation_class) do
