@@ -18,7 +18,7 @@ module Opera
             end
 
             execution = result.executions.pop
-            result.executions << { execution => operation_result.executions }
+            result.add_execution(execution => operation_result.executions)
           end
 
           private

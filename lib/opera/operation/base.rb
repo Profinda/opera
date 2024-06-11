@@ -14,6 +14,7 @@ module Opera
         @result = Result.new
         @params = params.freeze
         @dependencies = dependencies.freeze
+        config
       end
 
       def config
