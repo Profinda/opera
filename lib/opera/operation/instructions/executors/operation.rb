@@ -18,7 +18,9 @@ module Opera
             end
 
             execution = result.executions.pop
-            result.add_execution(execution => operation_result.executions)
+            result.add_execution(execution => operation_result.executions) unless production_mode?
+
+            operation_result
           end
 
           private

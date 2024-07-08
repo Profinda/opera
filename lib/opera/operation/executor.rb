@@ -62,6 +62,10 @@ module Opera
         operation.config
       end
 
+      def production_mode?
+        config.mode == Config::PRODUCTION_MODE
+      end
+
       def context
         operation.context
       end

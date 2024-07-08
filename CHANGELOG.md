@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.2.17 - July 8, 2024
+
+- minor fix `mode` configuration option.
+
 ### 0.2.16 - June 8, 2024
 
 - add `mode` configuration option. When set to `:production` we optimize memory usage by skipping storing executions.

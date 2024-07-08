@@ -8,7 +8,7 @@ module Opera
           def call(instruction)
             method = instruction[:method]
 
-            operation.result.add_execution(method)
+            operation.result.add_execution(method) unless production_mode?
             operation.send(method)
           rescue StandardError => exception
             reporter&.error(exception)
