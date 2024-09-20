@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'opera/operation/attributes_dsl'
 require 'opera/operation/builder'
 require 'opera/operation/base'
 require 'opera/operation/executor'

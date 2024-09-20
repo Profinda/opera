@@ -159,8 +159,16 @@ Some cases and example how to use new operations
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer 
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -232,8 +240,17 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
+
 
   validate :profile_schema
 
@@ -282,8 +299,16 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -358,8 +383,16 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -417,8 +450,16 @@ result = Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -476,8 +517,16 @@ class Profile::Create < Opera::Operation::Base
     config.transaction_class = Profile
   end
 
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -541,8 +590,16 @@ class Profile::Create < Opera::Operation::Base
     config.transaction_class = Profile
   end
 
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -602,8 +659,16 @@ D, [2020-08-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -657,8 +722,16 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -719,8 +792,16 @@ Profile::Create.call(params: {
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
-  context_accessor :profile
-  dependencies_reader :current_account, :mailer
+  # DEPRECATED
+  # context_accessor :profile
+  context do
+    attr_accessor :profile
+  end
+  # DEPRECATED
+  # dependencies_reader :current_account, :mailer
+  dependencies do
+    attr_reader :current_account, :mailer
+  end
 
   validate :profile_schema
 
@@ -977,26 +1058,11 @@ end
 
 For creating instance methods that are meant to be read-only and not stored within a context hash, defining these methods as private is a more suitable and clear approach compared to using context_reader with a default. This method ensures that transient dependencies remain well-encapsulated and are not confused with persistent application state.
 
-#### `context_writer`
+### `context|params|depenencies`
 
-The `context_writer` helper method is designed to enable setting of values for specified keys within a `context` hash. This method dynamically defines a method that acts as a setter, allowing for the direct modification of the value associated with a given key.
+The `context|params|depenencies` helper method is designed to enable easy access to and modification of values for specified keys within a `context` hash. This method dynamically defines both getter and setter methods for the designated keys, facilitating straightforward retrieval and update of values.
 
-#### Usage
-```ruby
-context_writer :profile
-
-step :fetch_profile
-
-def fetch_profile
-  self.profile = ProfileFetcher.call # sets context[:profile]
-end
-```
-
-#### `context_accessor`
-
-The `context_accessor` helper method is designed to enable easy access to and modification of values for specified keys within a `context` hash. This method dynamically defines both getter and setter methods for the designated keys, facilitating straightforward retrieval and update of values.
-
-#### Parameters
+#### attr_reader, attr_accessor Parameters
 
 **key (Symbol):** The key(s) for which the getter and setter methods are to be created. These symbols will correspond to keys in the context hash.
 
@@ -1004,7 +1070,9 @@ The `context_accessor` helper method is designed to enable easy access to and mo
 
 #### Usage
 ```ruby
-context_accessor :profile
+context do
+  attr_accessor :profile
+end
 
 step :fetch_profile
 step :update_profile
@@ -1019,16 +1087,19 @@ end
 ```
 
 ```ruby
-context_accessor :profile, default: -> { Profile.new }
+context do
+  attr_accessor :profile, default: -> { Profile.new }
+end
 ```
 
 ```ruby
-context_accessor :profile, :account
+context do
+  attr_accessor :profile, :account
+end
 ```
 
 #### Other methods
 >
-    - [params|dependencies]_reader     - predefined readers for immutable arguments
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
