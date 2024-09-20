@@ -26,6 +26,8 @@ Or install it yourself as:
 
     $ gem install opera
 
+Note. If you are using Ruby 2.x please use Opera 0.2.x
+
 ## Configuration
 
 Opera is built to be used with or without Rails.
