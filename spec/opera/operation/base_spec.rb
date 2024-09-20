@@ -263,7 +263,7 @@ module Opera
               Class.new(Operation::Base) do
                 context do
                   attr_reader :example, default: -> { 'xxxx' }
-                  attr_accessor :example2, default: -> { 'yyyy' }
+                  attr_accessor :example2, :example3, default: -> { 'yyyy' }
                 end
 
                 alias_method :example_new, :example
@@ -281,13 +281,13 @@ module Opera
                 end
 
                 def step_3
-                  result.output = [example, example2, example_new]
+                  result.output = [example, example2, example3, example_new]
                 end
               end
             end
 
             it 'returns value from context' do
-              expect(operation_class.call.output).to eq([12, 13, 12])
+              expect(operation_class.call.output).to eq([12, 13, 'yyyy', 12])
             end
           end
 
