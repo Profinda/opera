@@ -3,14 +3,14 @@
 module Opera
   module Operation
     class Result
+      class OutputError < StandardError; end
+
       attr_reader :errors, # Acumulator of errors in validation + steps
                   :exceptions, # Acumulator of exceptions in steps
                   :information, # Temporal object to store related information
                   :executions # Stacktrace or Pipe of the methods evaludated
 
-      attr_accessor :output # Final object returned if success?
-
-      alias to_h output
+      attr_accessor :output # in case of success, it contains the resulting value
 
       def initialize(output: nil, errors: {})
         @errors = errors
@@ -30,6 +30,12 @@ module Opera
 
       def failures
         errors.merge(exceptions)
+      end
+
+      def output!
+        raise OutputError, 'Cannot retrieve output from a Failure.' if failure?
+
+        output
       end
 
       # rubocop:disable Metrics/MethodLength
