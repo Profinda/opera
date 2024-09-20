@@ -1,5 +1,10 @@
 # Opera Changelog
 
+### 0.2.18 - September 20, 2024
+
+- added `output!` method on Result object
+- deleted `to_h` alias for `output`
+
 ### 0.2.17 - July 8, 2024
 
 - minor fix `mode` configuration option.

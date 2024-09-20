@@ -33,6 +33,24 @@ module Opera
       it { expect(subject.output).to eq(:example) }
     end
 
+    describe '#output!' do
+      context 'with Success' do
+        before { subject.output = :example }
+
+        it { expect(subject.output!).to eq(:example) }
+      end
+
+      context 'with Failure' do
+        before { subject.add_error(:example, 'Example') }
+
+        it 'raises exception' do
+          expect do
+            subject.output!
+          end.to raise_error(Opera::Operation::Result::OutputError, 'Cannot retrieve output from a Failure.')
+        end
+      end
+    end
+
     describe '#add_error' do
       before { subject.add_error(:example, 'Example') }
 
@@ -99,14 +117,12 @@ module Opera
     end
 
     describe '#add_exception' do
-
       it do
         subject.add_exception(:example, 'Example')
         expect(subject.exceptions).to eq('example' => ['Example'])
       end
 
       context 'when classname provided' do
-
         it do
           subject.add_exception(:example, 'Example', classname: 'Foo')
           expect(subject.exceptions).to eq('Foo#example' => ['Example'])

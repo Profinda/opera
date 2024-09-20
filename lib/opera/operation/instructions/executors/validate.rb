@@ -17,7 +17,7 @@ module Opera
 
             case dry_result
             when Opera::Operation::Result
-              add_instruction_output(instruction, dry_result.to_h)
+              add_instruction_output(instruction, dry_result.output)
 
               unless dry_result.success?
                 result.add_errors(dry_result.errors)

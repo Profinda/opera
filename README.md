@@ -880,6 +880,7 @@ Opera::Operation::Result.new(output: 'success')
     - failure? - [true, false] - Return true if any error or exception
     - output   - [Anything]    - Return Anything
     - output=(Anything)        - Sets content of operation output
+    - output!                  - Return Anything if Success, raise exception if Failure
     - add_error(key, value)    - Adds new error message
     - add_errors(Hash)         - Adds multiple error messages
     - add_exception(method, message, classname: nil) - Adds new exception
