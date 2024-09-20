@@ -266,6 +266,8 @@ module Opera
                   attr_accessor :example2, default: -> { 'yyyy' }
                 end
 
+                alias_method :example_new, :example
+
                 step :step_1
                 step :step_2
                 step :step_3
@@ -279,13 +281,13 @@ module Opera
                 end
 
                 def step_3
-                  result.output = [example, example2]
+                  result.output = [example, example2, example_new]
                 end
               end
             end
 
             it 'returns value from context' do
-              expect(operation_class.call.output).to eq([12, 13])
+              expect(operation_class.call.output).to eq([12, 13, 12])
             end
           end
 
