@@ -256,6 +256,86 @@ module Opera
             expect(operation_class.call.output.keys.size).to eq(1)
           end
         end
+
+        context 'new syntax' do
+          context 'context block' do
+            let(:operation_class) do
+              Class.new(Operation::Base) do
+                context do
+                  attr_reader :example, default: -> { 'xxxx' }
+                  attr_accessor :example2, :example3, default: -> { 'yyyy' }
+                end
+
+                alias_method :example_new, :example
+
+                step :step_1
+                step :step_2
+                step :step_3
+
+                def step_1
+                  context[:example] = 12
+                end
+
+                def step_2
+                  self.example2 = 13
+                end
+
+                def step_3
+                  result.output = [example, example2, example3, example_new]
+                end
+              end
+            end
+
+            it 'returns value from context' do
+              expect(operation_class.call.output).to eq([12, 13, 'yyyy', 12])
+            end
+          end
+
+          context 'params and dependencies block' do
+            context 'for valid syntax' do
+              let(:operation_class) do
+                Class.new(Operation::Base) do
+                  params do
+                    attr_reader :example, default: -> { 'xxxx' }
+                  end
+                  dependencies do
+                    attr_reader :example2, default: -> { 'yyyy' }
+                  end
+
+                  step :step_1
+
+                  def step_1
+                    result.output = [example, example2]
+                  end
+                end
+              end
+
+              it 'returns value from context' do
+                expect(operation_class.call(params: { example: 12 }, dependencies: { example2: 13 }).output).to eq([12, 13])
+              end
+            end
+
+            context 'for invalid syntax' do
+              let(:operation_class) do
+                Class.new(Operation::Base) do
+                  params do
+                    attr_accessor :example, default: -> { 'xxxx' }
+                  end
+
+                  step :step_1
+
+                  def step_1
+                    result.output = [example, example2]
+                  end
+                end
+              end
+
+              it 'raises meaningful exception' do
+                expect { operation_class }.to raise_error(/You cannot use attr_accessor inside #params/)
+              end
+            end
+          end
+        end
       end
     end
 

@@ -55,42 +55,39 @@ module Opera
           raise(ArgumentError, "Method #{method} is already defined")
         end
 
+        def context(&blk)
+          AttributesDSL.new(klass: self, block_name: :context, allowed: [:attr_reader, :attr_accessor]).instance_exec(&blk)
+        end
+
+        def params(&blk)
+          AttributesDSL.new(klass: self, block_name: :params).instance_exec(&blk)
+        end
+
+        def dependencies(&blk)
+          AttributesDSL.new(klass: self, block_name: :dependencies).instance_exec(&blk)
+        end
+
+        # TODO: Delete with newer version
         %i[context params dependencies].each do |method|
           define_method("#{method}_reader") do |*attributes, **options|
-            attributes.map(&:to_sym).each do |attribute|
-              check_method_availability!(attribute)
-
-              define_method(attribute) do
-                value = if send(method).key?(attribute)
-                          send(method)[attribute]
-                        elsif options[:default]
-                          instance_exec(&options[:default])
-                        end
-
-                if send(method).frozen?
-                  send(method)[attribute] || value
-                else
-                  send(method)[attribute] ||= value
-                end
-              end
+            send(method) do
+              attr_reader *attributes, **options
             end
           end
         end
 
         %i[context].each do |method|
           define_method("#{method}_writer") do |*attributes|
-            attributes.map(&:to_sym).each do |attribute|
-              check_method_availability!("#{attribute}=")
-
-              define_method("#{attribute}=") do |value|
-                send(method)[attribute] = value
-              end
+            send(method) do
+              attr_writer *attributes
             end
           end
 
           define_method("#{method}_accessor") do |*attributes, **options|
-            send("#{method}_reader", *attributes, **options)
-            send("#{method}_writer", *attributes)
+            send(method) do
+              attr_reader *attributes, **options
+              attr_writer *attributes, **options
+            end
           end
         end
       end

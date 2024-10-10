@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "opera"
+require "pry"
 
 class BasicLogger
   %i[error info warn debug log fatal].each do |name|

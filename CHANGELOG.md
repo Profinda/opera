@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.3.0 - September 20, 2024
+
+- add new syntax for context, params and dependencies readers and accessors
+
 ### 0.2.18 - September 20, 2024
 
 - added `output!` method on Result object
