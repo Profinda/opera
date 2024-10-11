@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.3.1 - October 10, 2024
+
+- change minor ruby version to align it with specs
+
 ### 0.3.0 - September 20, 2024
 
 - add new syntax for context, params and dependencies readers and accessors
