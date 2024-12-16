@@ -16,6 +16,7 @@ module Opera
 
         INSTRUCTIONS.each do |instruction|
           define_method instruction do |method = nil, &blk|
+            self.check_method_availability!(method) if method
             instructions.concat(InnerBuilder.new.send(instruction, method, &blk))
           end
         end

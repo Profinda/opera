@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.3.2 - December 16, 2024
+
+- Fix issue with step method definition overriding context
+
 ### 0.3.1 - October 10, 2024
 
 - change minor ruby version to align it with specs

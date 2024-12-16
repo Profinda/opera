@@ -257,6 +257,34 @@ module Opera
           end
         end
 
+        context 'when step and context have the same name' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context do
+                attr_reader :search
+              end
+
+              step :search
+              step :step_2
+              step :step_3
+
+              def search
+                context[:example] = 12
+              end
+
+              def step_2
+                raise "Testing exceptions order"
+              end
+
+              def step_3
+                result.output = :foo
+              end
+            end
+          end
+
+          it { expect { subject.output }.to raise_error('Method search is already defined') }
+        end
+
         context 'new syntax' do
           context 'context block' do
             let(:operation_class) do
