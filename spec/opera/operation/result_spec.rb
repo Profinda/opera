@@ -23,7 +23,7 @@ module Opera
       end
 
       it 'returns errors and exceptions combined' do
-        expect(subject.failures).to eq(foo1: [:bar1], 'foo2' => [:bar2])
+        expect(subject.failures).to eq(foo1: [:bar1], 'foo2' => :bar2)
       end
     end
 
@@ -119,13 +119,13 @@ module Opera
     describe '#add_exception' do
       it do
         subject.add_exception(:example, 'Example')
-        expect(subject.exceptions).to eq('example' => ['Example'])
+        expect(subject.exceptions).to eq('example' => 'Example')
       end
 
       context 'when classname provided' do
         it do
           subject.add_exception(:example, 'Example', classname: 'Foo')
-          expect(subject.exceptions).to eq('Foo#example' => ['Example'])
+          expect(subject.exceptions).to eq('Foo#example' => 'Example')
         end
       end
     end

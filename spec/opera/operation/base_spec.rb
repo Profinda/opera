@@ -602,7 +602,7 @@ module Opera
             expect_any_instance_of(operation_class).to_not receive(:step_2)
             expect(subject.executions).to match_array(%i[step_1])
             expect(subject).to be_failure
-            expect(subject.exceptions).to match(a_hash_including('step_1' => include(include('Example'))))
+            expect(subject.exceptions).to match(a_hash_including('step_1' => include('Example')))
           end
         end
       end
@@ -710,7 +710,7 @@ module Opera
             expect_any_instance_of(operation_class).to receive(:step_2).and_call_original
             expect(subject.executions).to match_array(%i[step_1 step_2])
             expect(subject).to be_failure
-            expect(subject.exceptions).to match(a_hash_including('MyClass#step_1' => include(include('Example'))))
+            expect(subject.exceptions).to match(a_hash_including('MyClass#step_1' => include('Example')))
           end
         end
       end
@@ -940,7 +940,7 @@ module Opera
           end
 
           it 'keeps track on exceptions' do
-            expect(subject.exceptions).to match(a_hash_including('step_3' => include(include('example'))))
+            expect(subject.exceptions).to match(a_hash_including('step_3' => include('example')))
           end
 
           it 'evaluates 3 steps' do
@@ -1201,7 +1201,7 @@ module Opera
           end
 
           it 'gives additional information about' do
-            expect(subject.exceptions['operations_collection']).to include(match('undefined method'))
+            expect(subject.exceptions['operations_collection']).to match('undefined method')
             expect(subject.executions).to match_array([:operations_collection])
           end
         end
