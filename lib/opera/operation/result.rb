@@ -62,8 +62,8 @@ module Opera
 
       def add_exception(method, message, classname: nil)
         key = [classname, Array(method).first].compact.join('#')
-        @exceptions[key] ||= []
-        @exceptions[key].push(message)
+
+        @exceptions[key] = message unless @exceptions.key?(key)
       end
 
       def add_exceptions(exceptions)

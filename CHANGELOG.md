@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.3.3 - January 15, 2025
+
+- Fix issue with handling exceptions in nested operations
+
 ### 0.3.2 - December 16, 2024
 
 - Fix issue with step method definition overriding context
