@@ -3,6 +3,7 @@
 ### 0.3.4 - February 19, 2025
 
 - Add support for `benchmark` label
+- Add support for instrumentation
 
 ### 0.3.3 - January 15, 2025
 
