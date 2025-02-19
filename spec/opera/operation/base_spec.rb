@@ -382,6 +382,7 @@ module Opera
                                                            kind: :step, method: :validation_2
                                                          }
                                                        ],
+                                                       label: nil,
                                                        kind: :validate
                                                      }
                                                    ])
@@ -1237,10 +1238,8 @@ module Opera
           Class.new(Operation::Base) do
             step :step_1
             step :step_2
-            benchmark do
-              step :step_3
-              step :step_4
-            end
+            benchmark :step_3
+            benchmark :step_4
             step :step_5
 
             def step_1
@@ -1270,8 +1269,10 @@ module Opera
         end
 
         it 'add benchmark info to result' do
-          expect(subject.information).to have_key(:real)
-          expect(subject.information).to have_key(:total)
+          expect(subject.information[:step_3]).to have_key(:real)
+          expect(subject.information[:step_3]).to have_key(:total)
+          expect(subject.information[:step_4]).to have_key(:real)
+          expect(subject.information[:step_4]).to have_key(:total)
         end
 
         context 'for failing step' do
@@ -1279,7 +1280,7 @@ module Opera
             Class.new(Operation::Base) do
               step :step_1
               step :step_2
-              benchmark do
+              benchmark :example do
                 step :step_3
                 step :step_4
               end
@@ -1309,6 +1310,11 @@ module Opera
 
           it 'executes only first 3 instructions' do
             expect(subject.executions).to match_array(%i[step_1 step_2 step_3])
+          end
+
+          it 'add benchmark info to result' do
+            expect(subject.information[:example]).to have_key(:real)
+            expect(subject.information[:example]).to have_key(:total)
           end
         end
       end

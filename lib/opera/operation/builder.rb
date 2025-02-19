@@ -35,6 +35,7 @@ module Opera
             instructions << if !blk.nil?
                               {
                                 kind: instruction,
+                                label: method,
                                 instructions: InnerBuilder.new(&blk).instructions
                               }
                             else
