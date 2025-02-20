@@ -44,7 +44,7 @@ module Opera
         return yield if !instrumentation_enabled?
         return yield if level == :step && instrumentation_level != :step
 
-        instrumentation_class.send(instrumentation_method, trace_name) do
+        instrumentation_class.send(instrumentation_method, trace_name, **instrumentation_options.except(:level)) do
           yield
         end
       end
