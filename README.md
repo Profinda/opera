@@ -52,7 +52,6 @@ Once opera gem is in your project you can start to build Operations
 
 ```ruby
 class A < Opera::Operation::Base
-
   configure do |config|
     config.transaction_class = Profile
     config.reporter = Rails.logger
