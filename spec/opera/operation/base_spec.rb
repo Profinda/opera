@@ -382,6 +382,7 @@ module Opera
                                                            kind: :step, method: :validation_2
                                                          }
                                                        ],
+                                                       label: nil,
                                                        kind: :validate
                                                      }
                                                    ])
@@ -1042,6 +1043,85 @@ module Opera
         end
       end
 
+      context 'for instrumentation' do
+        let(:instrumentation_class) do
+          Class.new do
+            def self.trace(name)
+              puts "Trace #{name}"
+              yield
+            end
+          end
+        end
+
+        let(:operation_class) do
+          FakeName = Class.new(Operation::Base) do
+            step :step_1
+            step :step_2
+            step :step_3
+            step :step_4
+            step :step_5
+
+            def step_1
+              true
+            end
+
+            def step_2
+              true
+            end
+
+            def step_3
+              true
+            end
+
+            def step_4
+              1
+            end
+
+            def step_5
+              true
+            end
+          end
+        end
+
+        context 'for operation level' do
+          before do
+            Operation::Config.configure do |config|
+              config.instrumentation_class = instrumentation_class
+              config.instrumentation_method = :trace
+            end
+          end
+
+          it 'evaluates all steps' do
+            expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
+          end
+
+          it 'calls instrumentation with correct params' do
+            expect(instrumentation_class).to receive(:trace).with('Opera::FakeName').and_call_original
+            subject
+          end
+        end
+
+        context 'for step level' do
+          before do
+            Operation::Config.configure do |config|
+              config.instrumentation_class = instrumentation_class
+              config.instrumentation_method = :trace
+              config.instrumentation_options = { level: :step }
+            end
+          end
+
+          it 'evaluates all steps' do
+            expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
+          end
+
+          it 'calls instrumentation with correct params' do
+            expect(instrumentation_class).to receive(:trace).exactly(6).times.and_call_original
+
+            subject
+          end
+        end
+      end
+
       context 'for operation' do
         let(:failing_operation) do
           Class.new(Operation::Base) do
@@ -1237,10 +1317,8 @@ module Opera
           Class.new(Operation::Base) do
             step :step_1
             step :step_2
-            benchmark do
-              step :step_3
-              step :step_4
-            end
+            benchmark :step_3
+            benchmark :step_4
             step :step_5
 
             def step_1
@@ -1270,8 +1348,10 @@ module Opera
         end
 
         it 'add benchmark info to result' do
-          expect(subject.information).to have_key(:real)
-          expect(subject.information).to have_key(:total)
+          expect(subject.information[:step_3]).to have_key(:real)
+          expect(subject.information[:step_3]).to have_key(:total)
+          expect(subject.information[:step_4]).to have_key(:real)
+          expect(subject.information[:step_4]).to have_key(:total)
         end
 
         context 'for failing step' do
@@ -1279,7 +1359,7 @@ module Opera
             Class.new(Operation::Base) do
               step :step_1
               step :step_2
-              benchmark do
+              benchmark :example do
                 step :step_3
                 step :step_4
               end
@@ -1309,6 +1389,11 @@ module Opera
 
           it 'executes only first 3 instructions' do
             expect(subject.executions).to match_array(%i[step_1 step_2 step_3])
+          end
+
+          it 'add benchmark info to result' do
+            expect(subject.information[:example]).to have_key(:real)
+            expect(subject.information[:example]).to have_key(:total)
           end
         end
       end

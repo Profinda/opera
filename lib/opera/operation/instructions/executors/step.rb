@@ -8,8 +8,10 @@ module Opera
           def call(instruction)
             method = instruction[:method]
 
-            operation.result.add_execution(method) unless production_mode?
-            operation.send(method)
+            Instrumentation.new(config).instrument(name: "##{method}", level: :step) do
+              operation.result.add_execution(method) unless production_mode?
+              operation.send(method)
+            end
           rescue StandardError => exception
             reporter&.error(exception)
             operation.result.add_exception(method, "#{exception.message}, for #{operation.inspect}", classname: operation.class.name)

@@ -37,7 +37,10 @@ Simply initialise the configuration and chose what method you want to use to rep
 Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
   config.transaction_method = :transaction
-  config.transaction_options = { requires_new: true }
+  config.transaction_options = { requires_new: true, level: :step } # or level: :operation - default
+  config.instrumentation_class = Datadog::Tracing
+  config.instrumentation_method = :trace
+  config.instrumentation_options = { service: :operation }
   config.mode = :development # Can be set to production too
   config.reporter = defined?(Rollbar) ? Rollbar : Rails.logger
 end
@@ -52,7 +55,6 @@ Once opera gem is in your project you can start to build Operations
 
 ```ruby
 class A < Opera::Operation::Base
-
   configure do |config|
     config.transaction_class = Profile
     config.reporter = Rails.logger
@@ -96,16 +98,42 @@ Start developing your business logic, services and interactions as Opera::Operat
 When using Opera::Operation inside an engine add the following
 configuration to your spec_helper.rb or rails_helper.rb:
 
-```
+```ruby
 Opera::Operation::Config.configure do |config|
   config.transaction_class = ActiveRecord::Base
 end
 ```
 
 Without this extra configuration you will receive:
-```
+```ruby
 NoMethodError:
   undefined method `transaction' for nil:NilClass
+```
+
+### Instrumentation
+
+When you want to easily instrument your operations you can add this to the opera config:
+
+```ruby
+Rails.application.configure do
+  config.x.instrumentation_class = Datadog::Tracing
+  config.x.instrumentation_method = :trace
+  config.x.instrumentation_options = { service: :opera }
+end
+```
+
+You can also instrument individual operations by adding this to the operation config:
+
+```ruby
+class A < Opera::Operation::Base
+  configure do |config|
+    config.instrumentation_class = Datadog::Tracing
+    config.instrumentation_method = :trace
+    config.instrumentation_options = { service: :opera, level: :step }
+  end
+
+  # steps
+end
 ```
 
 ### Debugging
@@ -674,10 +702,12 @@ class Profile::Create < Opera::Operation::Base
 
   validate :profile_schema
 
-  step :create
-  step :update
+  benchmark :fast_section do
+    step :create
+    step :update
+  end
 
-  benchmark do
+  benchmark :slow_section do
     step :send_email
     step :output
   end
@@ -717,7 +747,7 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @exceptions={}, @information={:real=>1.800013706088066e-05, :total=>0.0}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @exceptions={}, @information={fast_section: {:real=>0.300013706088066e-05, :total=>0.0}, slow_section: {:real=>1.800013706088066e-05, :total=>0.0}}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Success
