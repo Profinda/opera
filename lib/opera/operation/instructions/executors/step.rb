@@ -8,7 +8,7 @@ module Opera
           def call(instruction)
             method = instruction[:method]
 
-            config.instrumentation_wrapper("#{operation.class.name}##{method}", level: :step) do
+            config.instrumentation_wrapper("##{method}", level: :step) do
               operation.result.add_execution(method) unless production_mode?
               operation.send(method)
             end
