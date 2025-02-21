@@ -32,23 +32,6 @@ module Opera
         Rails.application.config.x.reporter.presence if defined?(Rails)
       end
 
-      def instrumentation_enabled?
-        !!instrumentation_class
-      end
-
-      def instrumentation_level
-        instrumentation_options[:level] || :operation
-      end
-
-      def instrumentation_wrapper(trace_name, level: :operation)
-        return yield if !instrumentation_enabled?
-        return yield if level == :step && instrumentation_level != :step
-
-        instrumentation_class.send(instrumentation_method, trace_name, **instrumentation_options.except(:level)) do
-          yield
-        end
-      end
-
       private
 
       def validate!
@@ -71,14 +54,6 @@ module Opera
 
         def production_mode?
           mode == PRODUCTION_MODE
-        end
-
-        def instrumentation_enabled?
-          !!instrumentation_class
-        end
-
-        def instrumentation_level
-          instrumentation_options[:level] || :operation
         end
       end
     end
