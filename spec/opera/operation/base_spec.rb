@@ -1044,10 +1044,11 @@ module Opera
       end
 
       context 'for instrumentation' do
-        let(:instrumentation_class) do
-          Class.new do
-            def self.trace(name)
-              puts "Trace #{name}"
+        let(:instrumentation_wrapper) do
+          Class.new(Opera::Operation::Instrumentation::Base) do
+
+            def self.instrument(operation, name:, level:)
+              puts "Trace #{name} with level #{level}"
               yield
             end
           end
@@ -1083,42 +1084,25 @@ module Opera
           end
         end
 
-        context 'for operation level' do
-          before do
-            Operation::Config.configure do |config|
-              config.instrumentation_class = instrumentation_class
-              config.instrumentation_method = :trace
-            end
-          end
-
-          it 'evaluates all steps' do
-            expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
-          end
-
-          it 'calls instrumentation with correct params' do
-            expect(instrumentation_class).to receive(:trace).with('Opera::FakeName').and_call_original
-            subject
+        before do
+          Operation::Config.configure do |config|
+            config.instrumentation_class = instrumentation_wrapper
           end
         end
 
-        context 'for step level' do
-          before do
-            Operation::Config.configure do |config|
-              config.instrumentation_class = instrumentation_class
-              config.instrumentation_method = :trace
-              config.instrumentation_options = { level: :step }
-            end
-          end
+        it 'evaluates all steps' do
+          expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
+        end
 
-          it 'evaluates all steps' do
-            expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
-          end
+        it 'calls instrumentation with correct params' do
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: 'Opera::FakeName', level: :operation).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_1', level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_2', level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_3', level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_4', level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_5', level: :step).once
 
-          it 'calls instrumentation with correct params' do
-            expect(instrumentation_class).to receive(:trace).exactly(6).times.and_call_original
-
-            subject
-          end
+          subject
         end
       end
 

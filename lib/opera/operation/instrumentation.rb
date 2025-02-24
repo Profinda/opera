@@ -3,29 +3,31 @@
 module Opera
   module Operation
     class Instrumentation
-      attr_reader :config
+      class Base
+        def self.instrument(operation, name:, level: :operation)
+          raise NotImplementedError, "#{self.class} must implement #instrument"
+        end
+      end
 
-      def initialize(config)
-        @config = config
+      attr_reader :operation
+
+      def initialize(operation)
+        @operation = operation
       end
 
       def instrument(name:, level: :operation)
         return yield if !instrumentation_enabled?
-        return yield if level == :step && instrumentation_level != :step
+        return yield if !instrumentation_compatible?
 
-        instrumentation_class.send(instrumentation_method, name, **instrumentation_options.except(:level)) do
+        instrumentation_class.instrument(operation, name: name, level: level) do
           yield
         end
       end
 
       private
 
-      def instrumentation_options
-        config.instrumentation_options
-      end
-
-      def instrumentation_method
-        config.instrumentation_method
+      def config
+        operation.config
       end
 
       def instrumentation_class
@@ -36,8 +38,8 @@ module Opera
         !!config.instrumentation_class
       end
 
-      def instrumentation_level
-        instrumentation_options[:level] || :operation
+      def instrumentation_compatible?
+        config.instrumentation_class.ancestors.include?(Opera::Operation::Instrumentation::Base)
       end
     end
   end
