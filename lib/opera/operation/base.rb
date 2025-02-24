@@ -33,7 +33,7 @@ module Opera
         def call(args = {})
           operation = new(params: args.fetch(:params, {}), dependencies: args.fetch(:dependencies, {}))
           executor = Executor.new(operation)
-          Instrumentation.new(config).instrument(name: self.name, level: :operation) do
+          Instrumentation.new(operation).instrument(name: self.name, level: :operation) do
             executor.evaluate_instructions(instructions)
           end
           executor.result

@@ -6,8 +6,8 @@ module Opera
       DEVELOPMENT_MODE = :development
       PRODUCTION_MODE = :production
 
-      attr_accessor :transaction_class, :transaction_method, :transaction_options, 
-                    :instrumentation_class, :instrumentation_method, :instrumentation_options, :mode, :reporter
+      attr_accessor :transaction_class, :transaction_method, :transaction_options, :instrumentation_class,
+                    :mode, :reporter
 
       def initialize
         @transaction_class = self.class.transaction_class
@@ -15,8 +15,6 @@ module Opera
         @transaction_options = self.class.transaction_options
 
         @instrumentation_class = self.class.instrumentation_class
-        @instrumentation_method = self.class.instrumentation_method || :instrument
-        @instrumentation_options = self.class.instrumentation_options || {}
 
         @mode = self.class.mode || DEVELOPMENT_MODE
         @reporter = custom_reporter || self.class.reporter
@@ -41,8 +39,8 @@ module Opera
       end
 
       class << self
-        attr_accessor :transaction_class, :transaction_method, :transaction_options, 
-                      :instrumentation_class, :instrumentation_method, :instrumentation_options, :mode, :reporter
+        attr_accessor :transaction_class, :transaction_method, :transaction_options, :instrumentation_class,
+                      :mode, :reporter
 
         def configure
           yield self

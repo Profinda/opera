@@ -1,5 +1,10 @@
 # Opera Changelog
 
+### 0.3.5 - February 24, 2025
+
+- Simplify instrumentation configuration
+- Allow instrumentation logic to be defined at the source
+
 ### 0.3.4 - February 19, 2025
 
 - Add support for `benchmark` label
