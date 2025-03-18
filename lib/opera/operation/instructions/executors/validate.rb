@@ -13,23 +13,20 @@ module Opera
 
           def evaluate_instruction(instruction)
             instruction[:kind] = :step
-            dry_result = super
+            validation_result = super
 
-            case dry_result
+            case validation_result
             when Opera::Operation::Result
-              add_instruction_output(instruction, dry_result.output)
+              add_instruction_output(instruction, validation_result.output)
 
-              unless dry_result.success?
-                result.add_errors(dry_result.errors)
-                result.add_exceptions(dry_result.exceptions)
-              end
+              result.add_errors(validation_result.errors) unless validation_result.success?
             when Dry::Validation::Result
-              add_instruction_output(instruction, dry_result.to_h)
+              add_instruction_output(instruction, validation_result.to_h)
 
-              result.add_errors(dry_result.errors) unless dry_result.success?
+              result.add_errors(validation_result.errors) unless validation_result.success?
             else
-              exception_message = "#{dry_result.class} is not expected object. Please check: #{dry_result.inspect}"
-              result.add_exception(instruction[:method], exception_message, classname: operation.class.name)
+              raise TypeError, "#{validation_result.class} is not a valid result for 'validate' step. " \
+                "Please check output of '#{instruction[:method]}' step in #{operation.class.name}"
             end
           end
         end

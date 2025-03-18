@@ -195,7 +195,7 @@ class Profile::Create < Opera::Operation::Base
     attr_accessor :profile
   end
   # DEPRECATED
-  # dependencies_reader :current_account, :mailer 
+  # dependencies_reader :current_account, :mailer
   dependencies do
     attr_reader :current_account, :mailer
   end
@@ -996,8 +996,6 @@ Opera::Operation::Result.new(output: 'success')
     - output!                  - Return Anything if Success, raise exception if Failure
     - add_error(key, value)    - Adds new error message
     - add_errors(Hash)         - Adds multiple error messages
-    - add_exception(method, message, classname: nil) - Adds new exception
-    - add_exceptions(Hash)     - Adds multiple exceptions
     - add_information(Hash)    - Adss new information - Useful informations for developers
 
 ## Opera::Operation::Base - Instance Methods

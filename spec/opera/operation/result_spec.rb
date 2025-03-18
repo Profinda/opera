@@ -19,11 +19,10 @@ module Opera
     describe '#failures' do
       before do
         subject.add_error(:foo1, :bar1)
-        subject.add_exception(:foo2, :bar2)
       end
 
-      it 'returns errors and exceptions combined' do
-        expect(subject.failures).to eq(foo1: [:bar1], 'foo2' => :bar2)
+      it 'returns errors combined' do
+        expect(subject.failures).to eq(foo1: [:bar1])
       end
     end
 
@@ -44,9 +43,10 @@ module Opera
         before { subject.add_error(:example, 'Example') }
 
         it 'raises exception' do
-          expect do
-            subject.output!
-          end.to raise_error(Opera::Operation::Result::OutputError, 'Cannot retrieve output from a Failure.')
+          expect { subject.output! }.to raise_error(Opera::Operation::Result::OutputError) do |error|
+            expect(error.message).to eq('Cannot retrieve output from a Failure.')
+            expect(error.errors).to eq(example: ['Example'])
+          end
         end
       end
     end
@@ -113,20 +113,6 @@ module Opera
         end
 
         it { expect(subject.errors).to include(result3) }
-      end
-    end
-
-    describe '#add_exception' do
-      it do
-        subject.add_exception(:example, 'Example')
-        expect(subject.exceptions).to eq('example' => 'Example')
-      end
-
-      context 'when classname provided' do
-        it do
-          subject.add_exception(:example, 'Example', classname: 'Foo')
-          expect(subject.exceptions).to eq('Foo#example' => 'Example')
-        end
       end
     end
 

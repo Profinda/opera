@@ -3,10 +3,16 @@
 module Opera
   module Operation
     class Result
-      class OutputError < StandardError; end
+      class OutputError < StandardError
+        attr_reader :errors
+
+        def initialize(msg, errors = {})
+          @errors = errors
+          super(msg)
+        end
+      end
 
       attr_reader :errors, # Acumulator of errors in validation + steps
-                  :exceptions, # Acumulator of exceptions in steps
                   :information, # Temporal object to store related information
                   :executions # Stacktrace or Pipe of the methods evaludated
 
@@ -14,14 +20,13 @@ module Opera
 
       def initialize(output: nil, errors: {})
         @errors = errors
-        @exceptions = {}
         @information = {}
         @executions = []
         @output = output
       end
 
       def failure?
-        errors.any? || exceptions.any?
+        errors.any?
       end
 
       def success?
@@ -29,11 +34,11 @@ module Opera
       end
 
       def failures
-        errors.merge(exceptions)
+        errors
       end
 
       def output!
-        raise OutputError, 'Cannot retrieve output from a Failure.' if failure?
+        raise OutputError.new('Cannot retrieve output from a Failure.', errors) if failure?
 
         output
       end
@@ -57,18 +62,6 @@ module Opera
       def add_errors(errors)
         errors.to_hash.each_pair do |key, value|
           add_error(key, value)
-        end
-      end
-
-      def add_exception(method, message, classname: nil)
-        key = [classname, Array(method).first].compact.join('#')
-
-        @exceptions[key] = message unless @exceptions.key?(key)
-      end
-
-      def add_exceptions(exceptions)
-        exceptions.each_pair do |key, value|
-          add_exception(key, value)
         end
       end
 
