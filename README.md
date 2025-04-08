@@ -31,7 +31,7 @@ Note. If you are using Ruby 2.x please use Opera 0.2.x
 ## Configuration
 
 Opera is built to be used with or without Rails.
-Simply initialise the configuration and chose what method you want to use to report errors and what library you want to use to implement transactions
+Simply initialize the configuration and choose a custom logger and which library to use for implementing transactions.
 
 ```ruby
 Opera::Operation::Config.configure do |config|
@@ -136,36 +136,12 @@ class A < Opera::Operation::Base
 end
 ```
 
-### Debugging
-
-When you want to easily debug exceptions you can add this
-to your dummy.rb:
-
-```
-Rails.application.configure do
-  config.x.reporter = Logger.new(STDERR)
-end
-```
-
-This should display exceptions captured inside operations.
-
-You can also do it in Opera::Operation configuration block:
-
-```
-Opera::Operation::Config.configure do |config|
-  config.transaction_class = ActiveRecord::Base
-  config.reporter = Logger.new(STDERR)
-end
-```
-
 ### Content
 [Basic operation](#user-content-basic-operation)
 
 [Example with sanitizing parameters](#user-content-example-with-sanitizing-parameters)
 
 [Example operation with old validations](#user-content-example-operation-with-old-validations)
-
-[Example with step that raises exception](#user-content-example-with-step-that-raises-exception)
 
 [Failing transaction](#user-content-failing-transaction)
 
@@ -237,7 +213,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x0000561636dced60 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-14 16:04:08", updated_at: "2020-08-14 16:04:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000561636dced60 @errors={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-14 16:04:08", updated_at: "2020-08-14 16:04:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 #### Call with INVALID parameters - missing first_name
@@ -250,7 +226,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x0000562d3f635390 @errors={:first_name=>["is missing"]}, @exceptions={}, @information={}, @executions=[:profile_schema]>
+#<Opera::Operation::Result:0x0000562d3f635390 @errors={:first_name=>["is missing"]}, @information={}, @executions=[:profile_schema]>
 ```
 
 #### Call with MISSING dependencies
@@ -263,7 +239,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x007f87ba2c8f00 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 33, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:04:25", updated_at: "2019-01-03 12:04:25", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007f87ba2c8f00 @errors={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 33, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:04:25", updated_at: "2019-01-03 12:04:25", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Example with sanitizing parameters
@@ -322,7 +298,7 @@ Profile::Create.call(params: {
 })
 
 # NOTE: Last name is missing in output model
-#<Opera::Operation::Result:0x000055e36a1fab78 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 44, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: nil, created_at: "2020-08-17 11:07:08", updated_at: "2020-08-17 11:07:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x000055e36a1fab78 @errors={}, @information={}, @executions=[:profile_schema, :create, :send_email, :output], @output={:model=>#<Profile id: 44, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: nil, created_at: "2020-08-17 11:07:08", updated_at: "2020-08-17 11:07:08", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Example operation with old validations
@@ -393,7 +369,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x0000560ebc9e7a98 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :old_validation, :create, :send_email, :output], @output={:model=>#<Profile id: 41, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-14 19:15:12", updated_at: "2020-08-14 19:15:12", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000560ebc9e7a98 @errors={}, @information={}, @executions=[:profile_schema, :build_record, :old_validation, :create, :send_email, :output], @output={:model=>#<Profile id: 41, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-14 19:15:12", updated_at: "2020-08-14 19:15:12", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 #### Call with INVALID parameters
@@ -406,74 +382,7 @@ Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x0000560ef76ba588 @errors={:last_name=>["can't be blank"]}, @exceptions={}, @information={:missing_validations=>"Please check dry validations"}, @executions=[:build_record, :old_validation]>
-```
-
-### Example with step that raises exception
-
-```ruby
-class Profile::Create < Opera::Operation::Base
-  # DEPRECATED
-  # context_accessor :profile
-  context do
-    attr_accessor :profile
-  end
-  # DEPRECATED
-  # dependencies_reader :current_account, :mailer
-  dependencies do
-    attr_reader :current_account, :mailer
-  end
-
-  validate :profile_schema
-
-  step :build_record
-  step :exception
-  step :create
-  step :send_email
-  step :output
-
-  def profile_schema
-    Dry::Validation.Schema do
-      required(:first_name).filled
-    end.call(params)
-  end
-
-  def build_record
-    self.profile = current_account.profiles.build(params)
-    self.profile.force_name_validation = true
-  end
-
-  def exception
-    raise StandardError, 'Example'
-  end
-
-  def create
-    self.profile = profile.save
-  end
-
-  def send_email
-    return true unless mailer
-
-    mailer.send_mail(profile: profile)
-  end
-
-  def output
-    result.output(model: profile)
-  end
-end
-```
-
-##### Call with step throwing exception
-
-```ruby
-result = Profile::Create.call(params: {
-  first_name: :foo,
-  last_name: :bar
-}, dependencies: {
-  current_account: Account.find(1)
-})
-
-#<Opera::Operation::Result:0x0000562ad0f897c8 @errors={}, @exceptions={"Profile::Create#exception"=>["Example"]}, @information={}, @executions=[:profile_schema, :build_record, :exception]>
+#<Opera::Operation::Result:0x0000560ef76ba588 @errors={:last_name=>["can't be blank"]}, @information={:missing_validations=>"Please check dry validations"}, @executions=[:build_record, :old_validation]>
 ```
 
 ### Example with step that finishes execution
@@ -536,7 +445,7 @@ result = Profile::Create.call(params: {
   current_account: Account.find(1)
 })
 
-#<Opera::Operation::Result:0x007fc2c59a8460 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :build_record, :create]>
+#<Opera::Operation::Result:0x007fc2c59a8460 @errors={}, @information={}, @executions=[:profile_schema, :build_record, :create]>
 ```
 
 ### Failing transaction
@@ -609,7 +518,7 @@ D, [2020-08-14T16:13:30.946466 #2504] DEBUG -- :   Account Load (0.5ms)  SELECT 
 D, [2020-08-14T16:13:30.960254 #2504] DEBUG -- :    (0.2ms)  BEGIN
 D, [2020-08-14T16:13:30.983981 #2504] DEBUG -- :   SQL (0.7ms)  INSERT INTO "profiles" ("first_name", "last_name", "created_at", "updated_at", "account_id") VALUES ($1, $2, $3, $4, $5) RETURNING "id"  [["first_name", "foo"], ["last_name", "bar"], ["created_at", "2020-08-14 16:13:30.982289"], ["updated_at", "2020-08-14 16:13:30.982289"], ["account_id", 1]]
 D, [2020-08-14T16:13:30.986233 #2504] DEBUG -- :    (0.2ms)  ROLLBACK
-#<Opera::Operation::Result:0x00005650e89b7708 @errors={}, @exceptions={"Profile::Create#update"=>["unknown attribute 'example_attr' for Profile."], "Profile::Create#transaction"=>["Opera::Operation::Base::RollbackTransactionError"]}, @information={}, @executions=[:profile_schema, :create, :update]>
+D, [2020-08-14T16:13:30.988231 #2504] DEBUG -- :    unknown attribute 'example_attr' for Profile. (ActiveModel::UnknownAttributeError)
 ```
 
 ### Passing transaction
@@ -682,7 +591,7 @@ D, [2020-08-17T12:10:44.856964 #2741] DEBUG -- :    (0.2ms)  BEGIN
 D, [2020-08-17T12:10:44.881332 #2741] DEBUG -- :   SQL (0.7ms)  INSERT INTO "profiles" ("first_name", "last_name", "created_at", "updated_at", "account_id") VALUES ($1, $2, $3, $4, $5) RETURNING "id"  [["first_name", "foo"], ["last_name", "bar"], ["created_at", "2020-08-17 12:10:44.879684"], ["updated_at", "2020-08-17 12:10:44.879684"], ["account_id", 1]]
 D, [2020-08-17T12:10:44.886168 #2741] DEBUG -- :   SQL (0.6ms)  UPDATE "profiles" SET "updated_at" = $1 WHERE "profiles"."id" = $2  [["updated_at", "2020-08-16 12:10:44.883164"], ["id", 47]]
 D, [2020-08-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
-#<Opera::Operation::Result:0x0000556528f29058 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-17 12:10:44", updated_at: "2020-08-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x0000556528f29058 @errors={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-17 12:10:44", updated_at: "2020-08-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Benchmark
@@ -747,7 +656,7 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @exceptions={}, @information={fast_section: {:real=>0.300013706088066e-05, :total=>0.0}, slow_section: {:real=>1.800013706088066e-05, :total=>0.0}}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @information={fast_section: {:real=>0.300013706088066e-05, :total=>0.0}, slow_section: {:real=>1.800013706088066e-05, :total=>0.0}}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Success
@@ -817,7 +726,7 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<Opera::Operation::Result:0x007fd0248e5638 @errors={"mailer"=>["Missing dependency"]}, @exceptions={}, @information={}, @executions=[:profile_schema, :populate, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 40, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:21:35", updated_at: "2019-01-02 12:21:35", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
+#<Opera::Operation::Result:0x007fd0248e5638 @errors={"mailer"=>["Missing dependency"]}, @information={}, @executions=[:profile_schema, :populate, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 40, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2019-01-03 12:21:35", updated_at: "2019-01-02 12:21:35", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
 ### Finish If
@@ -886,7 +795,7 @@ Profile::Create.call(params: {
   create_only: true,
   current_account: Account.find(1)
 })
-#<Opera::Operation::Result:0x007fd0248e5638 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :create, :profile_create_only], @output={}>
+#<Opera::Operation::Result:0x007fd0248e5638 @errors={}, @information={}, @executions=[:profile_schema, :create, :profile_create_only], @output={}>
 ```
 
 ### Inner Operation
@@ -938,7 +847,7 @@ Profile::Create.call(params: {
 }, dependencies: {
   current_account: Account.find(1)
 })
-#<Opera::Operation::Result:0x007f99b25f0f20 @errors={}, @exceptions={}, @information={}, @executions=[:profile_schema, :find, :create, :output], @output={:model=>{:id=>1, :user_id=>1, :linkedin_uid=>nil, ...}}>
+#<Opera::Operation::Result:0x007f99b25f0f20 @errors={}, @information={}, @executions=[:profile_schema, :find, :create, :output], @output={:model=>{:id=>1, :user_id=>1, :linkedin_uid=>nil, ...}}>
 ```
 
 ### Inner Operations
@@ -976,7 +885,7 @@ end
 ```ruby
 Profile::CreateMultiple.call(params: { number: 3 })
 
-#<Opera::Operation::Result:0x0000564189f38c90 @errors={}, @exceptions={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
+#<Opera::Operation::Result:0x0000564189f38c90 @errors={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
 ```
 
 ## Opera::Operation::Result - Instance Methods
@@ -989,8 +898,8 @@ Opera::Operation::Result.new(output: 'success')
 ```
 
 >
-    - success? - [true, false] - Return true if no errors and no exceptions
-    - failure? - [true, false] - Return true if any error or exception
+    - success? - [true, false] - Return true if no errors
+    - failure? - [true, false] - Return true if any error
     - output   - [Anything]    - Return Anything
     - output=(Anything)        - Sets content of operation output
     - output!                  - Return Anything if Success, raise exception if Failure
@@ -1133,16 +1042,15 @@ end
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
-      - raise Exception        - exception gets captured and stops operation execution
     - operation(Symbol)        - single instruction - requires to return Opera::Operation::Result object
-      - return [Opera::Operation::Result] - stops operation STEPS execution if any error, exception
+      - return [Opera::Operation::Result] - stops operation STEPS execution if failure
     - validate(Symbol)         - single dry-validations - requires to return Dry::Validation::Result object
       - return [Dry::Validation::Result] - stops operation STEPS execution if any error but continue with other validations
     - transaction(*Symbols)    - list of instructions to be wrapped in transaction
       - return [Truthly]       - continue operation execution
-      - return [False|Exception] - stops operation execution and breaks transaction/do rollback
+      - return [False] - stops operation execution and breaks transaction/do rollback
     - call(params: Hash, dependencies: Hash?)
-      - return [Opera::Operation::Result] - never raises an exception
+      - return [Opera::Operation::Result]
 
 ## Development
 

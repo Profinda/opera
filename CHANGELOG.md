@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.4.0 - TBD, 2025
+
+- Stop handling exceptions
+
 ### 0.3.5 - February 24, 2025
 
 - Simplify instrumentation configuration
