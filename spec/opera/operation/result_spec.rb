@@ -21,7 +21,7 @@ module Opera
         subject.add_error(:foo1, :bar1)
       end
 
-      it 'returns errors combined' do
+      it 'returns errors' do
         expect(subject.failures).to eq(foo1: [:bar1])
       end
     end
