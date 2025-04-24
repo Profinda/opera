@@ -421,7 +421,7 @@ module Opera
             end
           end
 
-          it 'does not handle exception' do
+          it 'raises exception' do
             expect { subject }.to raise_error(RuntimeError, 'exception message')
           end
         end
