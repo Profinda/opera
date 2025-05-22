@@ -3,6 +3,7 @@
 ### 0.4.0 - May 22, 2025
 
 - Stop handling exceptions
+- Stop supporting ruby 3.0
 
 ### 0.3.5 - February 24, 2025
 
