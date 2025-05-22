@@ -77,7 +77,6 @@ DEPENDENCIES
   dry-validation
   opera!
   pry-byebug
-  pry-nav
   rake (~> 13.2)
   rspec (~> 3.13)
 
