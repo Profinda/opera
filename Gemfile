@@ -8,6 +8,6 @@ gem 'rspec', '~> 3.0'
 
 group :test, :development do
   gem 'dry-validation'
-  gem 'pry-byebug', require: false, platform: :ruby
-  gem 'pry-nav', require: false, platform: :jruby
+  gem 'pry-byebug', require: false, platforms: :ruby
+  gem 'pry-nav', require: false, platforms: :jruby
 end
