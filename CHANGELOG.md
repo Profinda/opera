@@ -1,6 +1,6 @@
 # Opera Changelog
 
-### 0.4.0 - TBD, 2025
+### 0.4.0 - May 22, 2025
 
 - Stop handling exceptions
 
