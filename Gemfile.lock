@@ -76,6 +76,7 @@ PLATFORMS
 DEPENDENCIES
   dry-validation
   opera!
+  pry
   pry-byebug
   rake (~> 13.2)
   rspec (~> 3.13)
