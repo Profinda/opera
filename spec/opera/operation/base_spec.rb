@@ -204,7 +204,7 @@ module Opera
             end
           end
 
-          it { expect(subject.exceptions['step_1']).to include(/undefined method.*foo=/) }
+          it { expect { subject }.to raise_error(NoMethodError) }
         end
 
         context 'when defaulting to params reader' do
@@ -405,12 +405,11 @@ module Opera
       subject { operation_class.call(params: params, dependencies: dependencies) }
 
       context 'for validations' do
-        context 'when validation method returns unexpected object' do
+        context 'when validation step raises an exception' do
           let(:operation_class) do
             Class.new(Operation::Base) do
               validate do
                 step :validation_1
-                step :validation_2
               end
               step :step_1
 
@@ -418,7 +417,24 @@ module Opera
                 raise 'exception message'
               end
 
-              def validation_2
+              def step_1; end
+            end
+          end
+
+          it 'raises exception' do
+            expect { subject }.to raise_error(RuntimeError, 'exception message')
+          end
+        end
+
+        context 'when validation method returns unexpected object' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              validate do
+                step :validation_1
+              end
+              step :step_1
+
+              def validation_1
                 'unexpected string'
               end
 
@@ -426,10 +442,8 @@ module Opera
             end
           end
 
-          it 'handles exception' do
-            expect(subject).to be_failure
-            expect(subject.exceptions["validation_1"]).to include(/exception message/)
-            expect(subject.exceptions["validation_2"]).to include(/String is not expected object/)
+          it 'raises exception' do
+            expect { subject }.to raise_error(TypeError, /String is not a valid result for 'validate' step/)
           end
         end
 
@@ -581,31 +595,6 @@ module Opera
             )
           end
         end
-
-        context 'for exceptioning step' do
-          let(:operation_class) do
-            Class.new(Operation::Base) do
-              step :step_1
-              step :step_2
-
-              def step_1
-                raise(StandardError, 'Example')
-              end
-
-              def step_2
-                true
-              end
-            end
-          end
-
-          it 'calls step_1 only' do
-            expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
-            expect_any_instance_of(operation_class).to_not receive(:step_2)
-            expect(subject.executions).to match_array(%i[step_1])
-            expect(subject).to be_failure
-            expect(subject.exceptions).to match(a_hash_including('step_1' => include('Example')))
-          end
-        end
       end
 
       context 'for success' do
@@ -681,37 +670,6 @@ module Opera
               foo: %w[bar bar3],
               foo2: %w[bar2]
             )
-          end
-        end
-
-        context 'for exceptioning step' do
-          let(:operation_class) do
-            Class.new(Operation::Base) do
-              def self.name
-                'MyClass'
-              end
-
-              success do
-                step :step_1
-                step :step_2
-              end
-
-              def step_1
-                raise(StandardError, 'Example')
-              end
-
-              def step_2
-                true
-              end
-            end
-          end
-
-          it 'calls step_1 only' do
-            expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
-            expect_any_instance_of(operation_class).to receive(:step_2).and_call_original
-            expect(subject.executions).to match_array(%i[step_1 step_2])
-            expect(subject).to be_failure
-            expect(subject.exceptions).to match(a_hash_including('MyClass#step_1' => include('Example')))
           end
         end
       end
@@ -905,52 +863,6 @@ module Opera
 
         it 'evaluates all steps' do
           expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4 step_5])
-        end
-
-        context 'for raising exception' do
-          let(:operation_class) do
-            Class.new(Operation::Base) do
-              step :step_1
-              step :step_2
-              transaction do
-                step :step_3
-                step :step_4
-              end
-              step :step_5
-
-              def step_1
-                true
-              end
-
-              def step_2
-                true
-              end
-
-              def step_3
-                raise(StandardError, 'example')
-              end
-
-              def step_4
-                true
-              end
-
-              def step_5
-                true
-              end
-            end
-          end
-
-          it 'keeps track on exceptions' do
-            expect(subject.exceptions).to match(a_hash_including('step_3' => include('example')))
-          end
-
-          it 'evaluates 3 steps' do
-            expect(subject.executions).to match_array(%i[step_1 step_2 step_3])
-          end
-
-          it 'fails' do
-            expect(subject).to be_failure
-          end
         end
 
         context 'for finished execution step inside transaction' do
@@ -1234,39 +1146,6 @@ module Opera
 
           it 'adds inner errors into the result' do
             expect(subject.errors).to have_key(:base)
-          end
-        end
-
-        context 'when the operations step throws exception' do
-          let(:dependencies) do
-            { injected_operation: valid_operation }
-          end
-
-          let(:operation_class) do
-            Class.new(Operation::Base) do
-              operations :operations_collection
-              step :step_1
-
-              def operations_collection
-                nil.unknown_method?
-                (1..3).map do
-                  dependencies[:injected_operation].call
-                end
-              end
-
-              def step_1
-                result.output = context[:operations_collection_output]
-              end
-            end
-          end
-
-          it 'ends with failure' do
-            expect(subject).to be_failure
-          end
-
-          it 'gives additional information about' do
-            expect(subject.exceptions['operations_collection']).to match('undefined method')
-            expect(subject.executions).to match_array([:operations_collection])
           end
         end
 

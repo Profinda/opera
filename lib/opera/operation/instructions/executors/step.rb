@@ -12,10 +12,6 @@ module Opera
               operation.result.add_execution(method) unless production_mode?
               operation.send(method)
             end
-          rescue StandardError => exception
-            reporter&.error(exception)
-            operation.result.add_exception(method, "#{exception.message}, for #{operation.inspect}", classname: operation.class.name)
-            operation.result
           end
         end
       end

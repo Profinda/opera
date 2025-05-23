@@ -14,7 +14,6 @@ module Opera
               add_instruction_output(instruction, operation_result.output)
             else
               result.add_errors(operation_result.errors)
-              result.add_exceptions(operation_result.exceptions)
             end
 
             execution = result.executions.pop

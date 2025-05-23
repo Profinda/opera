@@ -12,8 +12,6 @@ module Opera
             instruction[:kind] = :step
             operations_results = super
 
-            return if result.exceptions.any?
-
             case operations_results
             when Array
               operations_results.each do |operation_result|
@@ -38,7 +36,6 @@ module Opera
           def add_failures(failures)
             failures.each do |failure|
               result.add_errors(failure.errors)
-              result.add_exceptions(failure.exceptions)
             end
           end
 
