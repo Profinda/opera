@@ -38,7 +38,13 @@ module Opera
       end
 
       def output!
-        raise OutputError.new('Cannot retrieve output from a Failure.', errors) if failure?
+        if failure?
+          errors_combined = errors.map do |key, messages|
+            "- #{key}: #{messages.join('; ')}"
+          end.join("\n")
+
+          raise OutputError.new("Operation failed — output cannot be retrieved.\n#{errors_combined}", errors)
+        end
 
         output
       end

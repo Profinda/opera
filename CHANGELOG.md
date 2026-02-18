@@ -1,5 +1,8 @@
 # Opera Changelog
 
+### 0.4.1 - Feb 18, 2026
+- Add parsed errors to default `output!` exception message
+
 ### 0.4.0 - May 22, 2025
 
 - Stop handling exceptions
