@@ -39,13 +39,38 @@ module Opera
         it { expect(subject.output!).to eq(:example) }
       end
 
-      context 'with Failure' do
-        before { subject.add_error(:example, 'Example') }
+      context 'with a single error' do
+        before { subject.add_error(:example, 'Example error') }
 
         it 'raises exception' do
           expect { subject.output! }.to raise_error(Opera::Operation::Result::OutputError) do |error|
-            expect(error.message).to eq('Cannot retrieve output from a Failure.')
-            expect(error.errors).to eq(example: ['Example'])
+            expect(error.message).to eq(
+              "Operation failed — output cannot be retrieved.\n- example: Example error"
+            )
+            expect(error.errors).to eq(example: ['Example error'])
+          end
+        end
+      end
+
+      context 'with multiple errors' do
+        before do
+          subject.add_errors(
+            example: ['Example error', 'Unexpected behavior'],
+            other_example: ['Hello darkness, my old friend']
+          )
+        end
+
+        it 'raises exception' do
+          expect { subject.output! }.to raise_error(Opera::Operation::Result::OutputError) do |error|
+            expect(error.message).to eq(
+              "Operation failed — output cannot be retrieved.\n" \
+              "- example: Example error; Unexpected behavior\n" \
+              "- other_example: Hello darkness, my old friend"
+            )
+            expect(error.errors).to eq(
+              example: ['Example error', 'Unexpected behavior'],
+              other_example: ['Hello darkness, my old friend']
+            )
           end
         end
       end
