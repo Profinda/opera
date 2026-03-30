@@ -33,7 +33,7 @@ module Opera
         def call(args = {})
           operation = new(params: args.fetch(:params, {}), dependencies: args.fetch(:dependencies, {}))
           executor = Executor.new(operation)
-          Instrumentation.new(operation).instrument(name: self.name, level: :operation) do
+          Instrumentation.new(operation).instrument(name: name, level: :operation) do
             executor.evaluate_instructions(instructions)
           end
           executor.result
@@ -58,7 +58,8 @@ module Opera
         end
 
         def context(&blk)
-          AttributesDSL.new(klass: self, block_name: :context, allowed: [:attr_reader, :attr_accessor]).instance_exec(&blk)
+          AttributesDSL.new(klass: self, block_name: :context,
+                            allowed: [:attr_reader, :attr_accessor]).instance_exec(&blk)
         end
 
         def params(&blk)
@@ -73,7 +74,7 @@ module Opera
         %i[context params dependencies].each do |method|
           define_method("#{method}_reader") do |*attributes, **options|
             send(method) do
-              attr_reader *attributes, **options
+              attr_reader(*attributes, **options)
             end
           end
         end
@@ -81,14 +82,14 @@ module Opera
         %i[context].each do |method|
           define_method("#{method}_writer") do |*attributes|
             send(method) do
-              attr_writer *attributes
+              attr_writer(*attributes)
             end
           end
 
           define_method("#{method}_accessor") do |*attributes, **options|
             send(method) do
-              attr_reader *attributes, **options
-              attr_writer *attributes, **options
+              attr_reader(*attributes, **options)
+              attr_writer(*attributes, **options)
             end
           end
         end

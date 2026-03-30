@@ -17,7 +17,9 @@ module Opera
           private
 
           def benchmark_key(instruction)
-            instruction[:method] || instruction[:label] || instruction[:instructions].map { |e| e[:method] }.join('-').to_sym
+            instruction[:method] ||
+              instruction[:label] ||
+              instruction[:instructions].map { |e| e[:method] }.join('-').to_sym
           end
         end
       end

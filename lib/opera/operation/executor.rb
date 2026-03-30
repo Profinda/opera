@@ -79,7 +79,7 @@ module Opera
       end
 
       def add_instruction_output(instruction, output = {})
-        context["#{instruction[:method]}_output".to_sym] = output
+        context[:"#{instruction[:method]}_output"] = output
       end
     end
   end
