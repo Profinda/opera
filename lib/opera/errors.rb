@@ -2,5 +2,6 @@
 
 module Opera
   class Error < StandardError; end
+
   class UnknownInstructionError < Error; end
 end

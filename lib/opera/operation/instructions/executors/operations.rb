@@ -42,7 +42,7 @@ module Opera
           def add_results(instruction, results)
             add_instruction_output(instruction, results.map(&:output))
             execution = result.executions.pop
-            result.add_execution(execution => results.map(&:executions))  unless production_mode?
+            result.add_execution(execution => results.map(&:executions)) unless production_mode?
           end
 
           def raise_error

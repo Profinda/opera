@@ -15,7 +15,8 @@ module Opera
           step :validation_2
         end
 
-        def step_1; end
+        def step_1
+        end
 
         def validation_1
           Class.new(Dry::Validation::Contract) do
@@ -36,7 +37,7 @@ module Opera
     subject { operation_class.call }
 
     describe '.configration' do
-      context '#mode' do
+      describe '#mode' do
         context 'when setting incorrect mode' do
           before do
             Operation::Config.configure do |config|
@@ -156,7 +157,8 @@ module Opera
               step :step_1
               step :step_2
 
-              def step_1; end
+              def step_1
+              end
 
               def step_2
                 result.output = foo
@@ -175,7 +177,8 @@ module Opera
               step :step_1
               step :step_2
 
-              def step_1; end
+              def step_1
+              end
 
               def step_2
                 result.output = foo
@@ -216,7 +219,7 @@ module Opera
               step :step_2
 
               def step_1
-                self.foo
+                foo
               end
 
               def step_2
@@ -241,11 +244,11 @@ module Opera
               step :step_2
 
               def step_1
-                self.foo[Kernel.rand * 1000] = 'foo'
+                foo[Kernel.rand * 1000] = 'foo'
               end
 
               def step_2
-                result.output = self.foo
+                result.output = foo
               end
             end
           end
@@ -260,9 +263,11 @@ module Opera
         context 'when step and context have the same name' do
           let(:operation_class) do
             Class.new(Operation::Base) do
+              # rubocop:disable RSpec/EmptyExampleGroup, RSpec/MissingExampleGroupArgument
               context do
                 attr_reader :search
               end
+              # rubocop:enable RSpec/EmptyExampleGroup, RSpec/MissingExampleGroupArgument
 
               step :search
               step :step_2
@@ -273,7 +278,7 @@ module Opera
               end
 
               def step_2
-                raise "Testing exceptions order"
+                raise 'Testing exceptions order'
               end
 
               def step_3
@@ -289,10 +294,12 @@ module Opera
           context 'context block' do
             let(:operation_class) do
               Class.new(Operation::Base) do
+                # rubocop:disable RSpec/EmptyExampleGroup, RSpec/MissingExampleGroupArgument
                 context do
                   attr_reader :example, default: -> { 'xxxx' }
                   attr_accessor :example2, :example3, default: -> { 'yyyy' }
                 end
+                # rubocop:enable RSpec/EmptyExampleGroup, RSpec/MissingExampleGroupArgument
 
                 alias_method :example_new, :example
 
@@ -339,7 +346,10 @@ module Opera
               end
 
               it 'returns value from context' do
-                expect(operation_class.call(params: { example: 12 }, dependencies: { example2: 13 }).output).to eq([12, 13])
+                expect(operation_class.call(params: { example: 12 },
+                                            dependencies: { example2: 13 }).output).to eq([
+                                              12, 13
+                                            ])
               end
             end
 
@@ -370,22 +380,22 @@ module Opera
     describe '.instructions' do
       it {
         expect(operation_class.instructions).to eq([
-                                                     {
-                                                       kind: :validate, method: :validation_1
-                                                     },
-                                                     {
-                                                       kind: :step, method: :step_1
-                                                     },
-                                                     {
-                                                       instructions: [
-                                                         {
-                                                           kind: :step, method: :validation_2
-                                                         }
-                                                       ],
-                                                       label: nil,
-                                                       kind: :validate
-                                                     }
-                                                   ])
+          {
+            kind: :validate, method: :validation_1
+          },
+          {
+            kind: :step, method: :step_1
+          },
+          {
+            instructions: [
+              {
+                kind: :step, method: :validation_2
+              }
+            ],
+            label: nil,
+            kind: :validate
+          }
+        ])
       }
     end
 
@@ -417,7 +427,8 @@ module Opera
                 raise 'exception message'
               end
 
-              def step_1; end
+              def step_1
+              end
             end
           end
 
@@ -438,7 +449,8 @@ module Opera
                 'unexpected string'
               end
 
-              def step_1; end
+              def step_1
+              end
             end
           end
 
@@ -456,7 +468,8 @@ module Opera
               end
               step :step_1
 
-              def step_1; end
+              def step_1
+              end
 
               def validation_1
                 Class.new(Dry::Validation::Contract) do
@@ -512,7 +525,7 @@ module Opera
             end
 
             it 'never calls step' do
-              expect_any_instance_of(operation_class).to_not receive(:step_1)
+              expect_any_instance_of(operation_class).not_to receive(:step_1)
               subject
             end
           end
@@ -549,7 +562,7 @@ module Opera
           it 'calls step_1 only' do
             expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
             expect_any_instance_of(operation_class).to receive(:step_2).and_call_original
-            expect_any_instance_of(operation_class).to_not receive(:step_3)
+            expect_any_instance_of(operation_class).not_to receive(:step_3)
 
             expect(subject.executions).to match_array(%i[step_1 step_2])
             expect(subject).to be_success
@@ -559,7 +572,7 @@ module Opera
             subject { operation_class }
 
             it 'is stateless' do
-              expect_any_instance_of(operation_class).to_not receive(:step_3)
+              expect_any_instance_of(operation_class).not_to receive(:step_3)
 
               5.times do
                 expect(subject.call(params: params)).to be_success
@@ -587,7 +600,7 @@ module Opera
 
           it 'finishes on first erroring step' do
             expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
-            expect_any_instance_of(operation_class).to_not receive(:step_2)
+            expect_any_instance_of(operation_class).not_to receive(:step_2)
             expect(subject.executions).to match_array(%i[step_1])
             expect(subject).to be_failure
             expect(subject.errors).to eq(
@@ -663,7 +676,7 @@ module Opera
           it 'finishes on first erroring step' do
             expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
             expect_any_instance_of(operation_class).to receive(:step_2).and_call_original
-            expect_any_instance_of(operation_class).to_not receive(:step_3)
+            expect_any_instance_of(operation_class).not_to receive(:step_3)
             expect(subject.executions).to match_array(%i[step_1 step_2])
             expect(subject).to be_failure
             expect(subject.errors).to eq(
@@ -695,7 +708,7 @@ module Opera
         end
 
         it 'DOES NOT have access to context from outside of operation' do
-          expect(subject.methods).to_not include(:context)
+          expect(subject.methods).not_to include(:context)
         end
       end
 
@@ -711,7 +724,8 @@ module Opera
             step :step_1
             step :step_2
 
-            def step_1; end
+            def step_1
+            end
 
             def step_2
               result.output = [foo, bar, baz]
@@ -769,9 +783,11 @@ module Opera
               step :step_1
               step :step_2
 
-              def step_1; end
+              def step_1
+              end
 
-              def step_2; end
+              def step_2
+              end
             end
           end
 
@@ -795,9 +811,11 @@ module Opera
               step :step_1
               step :step_2
 
-              def step_1; end
+              def step_1
+              end
 
-              def step_2; end
+              def step_2
+              end
             end
           end
 
@@ -907,7 +925,8 @@ module Opera
           end
 
           it 'never calls TransactionRollback' do
-            expect_any_instance_of(Opera::Operation::Instructions::Executors::Transaction).to_not receive(:transaction_error)
+            expect_any_instance_of(Opera::Operation::Instructions::Executors::Transaction)
+              .not_to receive(:transaction_error)
             subject
           end
         end
@@ -958,7 +977,6 @@ module Opera
       context 'for instrumentation' do
         let(:instrumentation_wrapper) do
           Class.new(Opera::Operation::Instrumentation::Base) do
-
             def self.instrument(operation, name:, level:)
               puts "Trace #{name} with level #{level}"
               yield
@@ -966,40 +984,43 @@ module Opera
           end
         end
 
-        let(:operation_class) do
-          FakeName = Class.new(Operation::Base) do
-            step :step_1
-            step :step_2
-            step :step_3
-            step :step_4
-            step :step_5
-
-            def step_1
-              true
-            end
-
-            def step_2
-              true
-            end
-
-            def step_3
-              true
-            end
-
-            def step_4
-              1
-            end
-
-            def step_5
-              true
-            end
-          end
-        end
+        let(:operation_class) { Opera::FakeName }
 
         before do
           Operation::Config.configure do |config|
             config.instrumentation_class = instrumentation_wrapper
           end
+
+          stub_const(
+            'Opera::FakeName',
+            Class.new(Operation::Base) do
+              step :step_1
+              step :step_2
+              step :step_3
+              step :step_4
+              step :step_5
+
+              def step_1
+                true
+              end
+
+              def step_2
+                true
+              end
+
+              def step_3
+                true
+              end
+
+              def step_4
+                1
+              end
+
+              def step_5
+                true
+              end
+            end
+          )
         end
 
         it 'evaluates all steps' do
@@ -1007,11 +1028,18 @@ module Opera
         end
 
         it 'calls instrumentation with correct params' do
-          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: 'Opera::FakeName', level: :operation).once.and_call_original
-          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_1', level: :step).once.and_call_original
-          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_2', level: :step).once.and_call_original
-          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_3', level: :step).once.and_call_original
-          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_4', level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(
+            anything, name: 'Opera::FakeName',
+                      level: :operation
+          ).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_1',
+                                                                                 level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_2',
+                                                                                 level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_3',
+                                                                                 level: :step).once.and_call_original
+          expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_4',
+                                                                                 level: :step).once.and_call_original
           expect(instrumentation_wrapper).to receive(:instrument).with(anything, name: '#step_5', level: :step).once
 
           subject
@@ -1028,7 +1056,8 @@ module Opera
               result.add_error(:base, 'Inner error')
             end
 
-            def step_2; end
+            def step_2
+            end
           end
         end
 
@@ -1110,7 +1139,8 @@ module Opera
             step :step_1
             step :step_2
 
-            def step_1; end
+            def step_1
+            end
 
             def step_2
               result.output = { example: 'output' }
@@ -1160,17 +1190,15 @@ module Opera
 
           it 'adds contains the inner executions in the executions array' do
             expect(subject.executions).to eq([{
-                                               operations_collection: [%i[step_1 step_2],
-                                                                       %i[step_1 step_2],
-                                                                       %i[step_1 step_2]]
-                                             }, :step_1])
+              operations_collection: [%i[step_1 step_2],
+                                      %i[step_1 step_2],
+                                      %i[step_1 step_2]]
+            }, :step_1])
           end
 
           it 'adds the output to the context of the operations' do
             expect(subject.output.size).to eq(3)
-            subject.output.each do |output|
-              expect(output).to eq(example: 'output')
-            end
+            expect(subject.output).to all(eq(example: 'output'))
           end
         end
       end

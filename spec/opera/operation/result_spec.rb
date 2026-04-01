@@ -65,7 +65,7 @@ module Opera
             expect(error.message).to eq(
               "Operation failed — output cannot be retrieved.\n" \
               "- example: Example error; Unexpected behavior\n" \
-              "- other_example: Hello darkness, my old friend"
+              '- other_example: Hello darkness, my old friend'
             )
             expect(error.errors).to eq(
               example: ['Example error', 'Unexpected behavior'],

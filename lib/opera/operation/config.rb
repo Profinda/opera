@@ -34,7 +34,7 @@ module Opera
 
       def validate!
         unless [DEVELOPMENT_MODE, PRODUCTION_MODE].include?(mode)
-          raise ArgumentError, 'Mode is incorrect. Can be either: development or production' 
+          raise ArgumentError, 'Mode is incorrect. Can be either: development or production'
         end
       end
 
