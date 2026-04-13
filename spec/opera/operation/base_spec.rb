@@ -1289,6 +1289,227 @@ module Opera
         end
       end
 
+      context 'for around' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            context_accessor :value
+            context_accessor :log, default: -> { [] }
+
+            step :step_1
+            around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              step :step_2
+              step :step_3
+            end
+
+            step :step_4
+
+            def step_1
+              self.value = 0
+            end
+
+            def step_2
+              self.value += 10
+            end
+
+            def step_3
+              self.value += 5
+            end
+
+            def step_4
+              result.output = {
+                value:,
+                log:
+              }
+            end
+
+            def with_wrapper
+              log << :before
+              yield
+              log << :after
+            end
+          end
+        end
+
+        it 'executes all steps' do
+          expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4])
+        end
+
+        it 'ends with success' do
+          expect(subject).to be_success
+        end
+
+        it 'processes all the logic correctly to produce value' do
+          expect(subject.output[:value]).to eq(15)
+        end
+
+        it 'calls the wrapper method around the nested steps' do
+          expect(subject.output[:log]).to eq(%i[before after])
+        end
+
+        context 'when a step inside around adds an error' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                step :step_2
+                step :step_3
+              end
+
+              step :step_4
+
+              def step_1
+              end
+
+              def step_2
+                result.add_error(:base, 'inner error')
+              end
+
+              def step_3
+                raise 'should not be reached'
+              end
+
+              def step_4
+                raise 'should not be reached'
+              end
+
+              def with_wrapper(&block)
+                yield
+              end
+            end
+          end
+
+          it 'stops at the failing step inside around' do
+            expect(subject.executions).to match_array(%i[step_1 step_2])
+          end
+
+          it 'ends with failure' do
+            expect(subject).to be_failure
+          end
+
+          it 'does not execute steps after around' do
+            expect_any_instance_of(operation_class).not_to receive(:step_4)
+            subject
+          end
+        end
+
+        context 'when finish! is called inside around' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                step :step_2
+                step :step_3
+              end
+
+              step :step_4
+
+              def step_1
+              end
+
+              def step_2
+                finish!
+              end
+
+              def step_3
+                raise 'should not be reached'
+              end
+
+              def step_4
+                raise 'should not be reached'
+              end
+
+              def with_wrapper(&block)
+                yield
+              end
+            end
+          end
+
+          it 'stops at finish! inside around' do
+            expect(subject.executions).to match_array(%i[step_1 step_2])
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'does not execute steps after around' do
+            expect_any_instance_of(operation_class).not_to receive(:step_4)
+            subject
+          end
+        end
+
+        context 'when around is used without a block' do
+          it 'raises ArgumentError' do
+            expect do
+              Class.new(Operation::Base) do
+                around :with_wrapper
+                def with_wrapper(&block)
+                  yield
+                end
+              end.call
+            end.to raise_error(ArgumentError)
+          end
+        end
+
+        context 'when the wrapper method does not yield' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                step :step_2
+              end
+
+              step :step_3
+
+              def step_1
+              end
+
+              def step_2
+                raise 'should not be reached'
+              end
+
+              def step_3
+                result.output = :reached
+              end
+
+              # intentionally does not yield
+              def with_wrapper(&block)
+              end
+            end
+          end
+
+          it 'skips nested steps when the wrapper does not yield' do
+            expect_any_instance_of(operation_class).not_to receive(:step_2)
+            subject
+          end
+
+          it 'still runs steps after around' do
+            expect(subject.output).to eq(:reached)
+          end
+        end
+
+        context 'when around raises an exception from the wrapper' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                step :step_1
+              end
+
+              def step_1
+              end
+
+              def with_wrapper(&block)
+                raise 'wrapper error'
+              end
+            end
+          end
+
+          it 'propagates the exception' do
+            expect { subject }.to raise_error(RuntimeError, 'wrapper error')
+          end
+        end
+      end
+
       context 'for finish_if' do
         let(:operation_class) do
           Class.new(Operation::Base) do

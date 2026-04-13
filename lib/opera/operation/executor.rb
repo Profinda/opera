@@ -48,6 +48,8 @@ module Opera
           Instructions::Executors::Benchmark.new(operation).call(instruction)
         when :finish_if
           Instructions::Executors::FinishIf.new(operation).call(instruction)
+        when :around
+          Instructions::Executors::Around.new(operation).call(instruction)
         else
           raise(UnknownInstructionError, "Unknown instruction #{instruction[:kind]}")
         end
