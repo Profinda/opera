@@ -953,7 +953,105 @@ end
 private
 
 def read_from_replica
-  ActiveRecord::Base.connected_to(role: :reading) { yield }
+  ActiveRecord::Base.connected_to(role: :reading, &block)
+end
+```
+
+#### Mixing step and operation inside around
+
+`around` can wrap any combination of `step` and `operation` instructions. All of them execute inside the wrapper, and their outputs are available in context afterwards as usual.
+
+```ruby
+class Profile::Create < Opera::Operation::Base
+  context do
+    attr_accessor :profile
+  end
+
+  dependencies do
+    attr_reader :current_account, :quota_checker
+  end
+
+  around :read_from_replica do
+    step :check_duplicate
+    operation :fetch_quota
+  end
+
+  step :create
+  step :output
+
+  def check_duplicate
+    result.add_error(:base, 'already exists') if Profile.exists?(email: params[:email])
+  end
+
+  def fetch_quota
+    quota_checker.call(params: params)
+  end
+
+  def create
+    self.profile = current_account.profiles.create(params)
+  end
+
+  def output
+    result.output = { model: profile, quota: context[:fetch_quota_output] }
+  end
+
+  private
+
+  def read_from_replica
+    ActiveRecord::Base.connected_to(role: :reading, &block)
+  end
+end
+```
+
+#### Nesting around inside a transaction
+
+`around` can be placed inside a `transaction` block alongside other instructions. If any step or operation inside `around` fails, the error propagates up and the transaction is rolled back as normal.
+
+```ruby
+class Profile::Create < Opera::Operation::Base
+  configure do |config|
+    config.transaction_class = ActiveRecord::Base
+  end
+
+  context do
+    attr_accessor :profile
+  end
+
+  dependencies do
+    attr_reader :current_account, :quota_checker, :audit_logger
+  end
+
+  transaction do
+    around :read_from_replica do
+      step :check_duplicate
+      operation :fetch_quota
+    end
+    operation :write_audit_log
+  end
+
+  step :output
+
+  def check_duplicate
+    result.add_error(:base, 'already exists') if Profile.exists?(email: params[:email])
+  end
+
+  def fetch_quota
+    quota_checker.call(params: params)
+  end
+
+  def write_audit_log
+    audit_logger.call(params: params)
+  end
+
+  def output
+    result.output = { quota: context[:fetch_quota_output] }
+  end
+
+  private
+
+  def read_from_replica
+    ActiveRecord::Base.connected_to(role: :reading, &block)
+  end
 end
 ```
 

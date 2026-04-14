@@ -1508,6 +1508,221 @@ module Opera
             expect { subject }.to raise_error(RuntimeError, 'wrapper error')
           end
         end
+
+        context 'when around contains both step and operation' do
+          let(:inner_operation) do
+            Class.new(Operation::Base) do
+              step :fetch
+
+              def fetch
+                result.output = { fetched: true }
+              end
+            end
+          end
+
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :log, default: -> { [] }
+
+              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                step :calculate
+                operation :fetch_something
+              end
+
+              step :output
+
+              def calculate
+                context[:calculated] = 42
+              end
+
+              def fetch_something
+                dependencies[:inner_operation].call
+              end
+
+              def output
+                result.output = {
+                  calculated: context[:calculated],
+                  fetched: context[:fetch_something_output],
+                  log: log
+                }
+              end
+
+              def with_wrapper
+                log << :before
+                yield
+                log << :after
+              end
+            end
+          end
+
+          subject { operation_class.call(dependencies: { inner_operation: inner_operation }) }
+
+          it 'executes all instructions' do
+            expect(subject.executions).to contain_exactly(:calculate, { fetch_something: [:fetch] }, :output)
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'runs the wrapper around both the step and the operation' do
+            expect(subject.output[:log]).to eq(%i[before after])
+          end
+
+          it 'produces correct output from the step' do
+            expect(subject.output[:calculated]).to eq(42)
+          end
+
+          it 'produces correct output from the operation' do
+            expect(subject.output[:fetched]).to eq({ fetched: true })
+          end
+        end
+
+        context 'when around is nested inside a transaction' do
+          let(:transaction_class) do
+            Class.new do
+              def self.transaction
+                yield
+              end
+            end
+          end
+
+          let(:fetch_operation) do
+            Class.new(Operation::Base) do
+              step :fetch
+
+              def fetch
+                result.output = { fetched: true }
+              end
+            end
+          end
+
+          let(:update_operation) do
+            Class.new(Operation::Base) do
+              step :update
+
+              def update
+                result.output = { updated: true }
+              end
+            end
+          end
+
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :log, default: -> { [] }
+
+              transaction do
+                around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                  step :calculate
+                  operation :fetch_something
+                end
+
+                operation :update_records
+              end
+
+              step :output
+
+              def calculate
+                context[:calculated] = 42
+              end
+
+              def fetch_something
+                dependencies[:fetch_operation].call
+              end
+
+              def update_records
+                dependencies[:update_operation].call
+              end
+
+              def output
+                result.output = {
+                  calculated: context[:calculated],
+                  fetched: context[:fetch_something_output],
+                  updated: context[:update_records_output],
+                  log: log
+                }
+              end
+
+              def with_wrapper
+                log << :before
+                yield
+                log << :after
+              end
+            end
+          end
+
+          before do
+            Operation::Config.configure do |config|
+              config.transaction_class = transaction_class
+              config.transaction_options = nil
+            end
+          end
+
+          after do
+            Operation::Config.configure do |config|
+              config.transaction_class = nil
+              config.transaction_options = nil
+            end
+          end
+
+          subject do
+            operation_class.call(dependencies: {
+              fetch_operation: fetch_operation,
+              update_operation: update_operation
+            })
+          end
+
+          it 'executes all instructions' do
+            expect(subject.executions).to contain_exactly({ fetch_something: [:fetch] }, :calculate,
+                                                          { update_records: [:update] }, :output)
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'runs the wrapper around the nested instructions inside the transaction' do
+            expect(subject.output[:log]).to eq(%i[before after])
+          end
+
+          it 'produces correct output from the step inside around' do
+            expect(subject.output[:calculated]).to eq(42)
+          end
+
+          it 'produces correct output from the operation inside around' do
+            expect(subject.output[:fetched]).to eq({ fetched: true })
+          end
+
+          it 'produces correct output from the operation alongside around inside the transaction' do
+            expect(subject.output[:updated]).to eq({ updated: true })
+          end
+
+          context 'when the operation inside around fails' do
+            let(:fetch_operation) do
+              Class.new(Operation::Base) do
+                step :fetch
+
+                def fetch
+                  result.add_error(:base, 'fetch failed')
+                end
+              end
+            end
+
+            it 'rolls back the transaction' do
+              expect(transaction_class).to receive(:transaction).and_call_original
+              subject
+            end
+
+            it 'ends with failure' do
+              expect(subject).to be_failure
+            end
+
+            it 'does not execute instructions after the transaction' do
+              expect_any_instance_of(operation_class).not_to receive(:output)
+              subject
+            end
+          end
+        end
       end
 
       context 'for finish_if' do
