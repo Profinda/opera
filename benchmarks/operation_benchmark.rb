@@ -179,6 +179,90 @@ ComplexOperation = Class.new(Opera::Operation::Base) do
 end
 
 # ---------------------------------------------------------------------------
+# Within operation — wraps steps and inner operations with a custom method
+# ---------------------------------------------------------------------------
+WithinOperation = Class.new(Opera::Operation::Base) do
+  configure do |config|
+    config.transaction_class = FakeTransaction
+  end
+
+  context do
+    attr_accessor :log, default: -> { [] }
+  end
+
+  step :prepare
+
+  within :with_connection do
+    step :query_one
+    step :query_two
+    operation :fetch_leaf
+  end
+
+  transaction do
+    within :with_lock do
+      step :write_one
+      step :write_two
+    end
+    step :write_three
+  end
+
+  step :output
+
+  def prepare
+    context[:counter] = 0
+  end
+
+  def query_one
+    context[:counter] += 1
+    log << :query_one
+  end
+
+  def query_two
+    context[:counter] += 1
+    log << :query_two
+  end
+
+  def fetch_leaf
+    LeafOperation.call(params: { n: context[:counter] })
+  end
+
+  def write_one
+    context[:counter] += 10
+    log << :write_one
+  end
+
+  def write_two
+    context[:counter] += 10
+    log << :write_two
+  end
+
+  def write_three
+    context[:counter] += 1
+    log << :write_three
+  end
+
+  def output
+    result.output = {
+      counter: context[:counter],
+      log: log,
+      leaf: context[:fetch_leaf_output]
+    }
+  end
+
+  def with_connection
+    log << :connect
+    yield
+    log << :disconnect
+  end
+
+  def with_lock
+    log << :lock
+    yield
+    log << :unlock
+  end
+end
+
+# ---------------------------------------------------------------------------
 # Operations (plural) consumer — calls multiple inner operations
 # ---------------------------------------------------------------------------
 BatchOperation = Class.new(Opera::Operation::Base) do
@@ -203,12 +287,14 @@ ITERATIONS = 1000
 PARAMS = { name: 'benchmark', batch_size: 5 }.freeze
 BATCH_PARAMS = { count: 5 }.freeze
 VALIDATION_PARAMS = { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com' }.freeze
+WITHIN_PARAMS = {}.freeze
 
 # Warm up
 3.times do
   ComplexOperation.call(params: PARAMS)
   BatchOperation.call(params: BATCH_PARAMS)
   ValidationOperation.call(params: VALIDATION_PARAMS)
+  WithinOperation.call(params: WITHIN_PARAMS)
 end
 
 puts "Opera v#{Opera::VERSION} — #{ITERATIONS} iterations each"
@@ -226,6 +312,10 @@ Benchmark.bm(35) do |x|
 
   x.report('ValidationOperation (validate):') do
     ITERATIONS.times { ValidationOperation.call(params: VALIDATION_PARAMS) }
+  end
+
+  x.report('WithinOperation (within + tx):') do
+    ITERATIONS.times { WithinOperation.call(params: WITHIN_PARAMS) }
   end
 
   x.report('LeafOperation (minimal):') do
