@@ -13,7 +13,7 @@ module Opera
             raise ArgumentError, 'around requires a block with at least one instruction' if nested_instructions.nil?
 
             operation.send(wrapper_method) do
-              evaluate_instructions(nested_instructions)
+              super
             end
           end
         end
