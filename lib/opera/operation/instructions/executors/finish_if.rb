@@ -6,8 +6,7 @@ module Opera
       module Executors
         class FinishIf < Executor
           def call(instruction)
-            instruction[:kind] = :step
-            operation.finish! if super
+            operation.finish! if execute_step(instruction)
           end
         end
       end
