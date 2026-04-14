@@ -3,7 +3,6 @@
 [![Gem Version](https://badge.fury.io/rb/opera.svg)](https://badge.fury.io/rb/opera)
 ![Master](https://github.com/Profinda/opera/actions/workflows/release.yml/badge.svg?branch=master)
 
-
 Simple DSL for services/interactions classes.
 
 Opera was born to mimic some of the philosophy of the dry gems but keeping the DSL simple.
@@ -48,7 +47,6 @@ end
 
 You can later override this configuration in each Operation to have more granularity
 
-
 ## Usage
 
 Once opera gem is in your project you can start to build Operations
@@ -77,10 +75,6 @@ class A < Opera::Operation::Base
     step :validate_relationships
   end
 
-  benchmark do
-    success :hal_sync
-  end
-
   success do
     step :send_mail
     step :report_to_audit_log
@@ -91,7 +85,6 @@ end
 ```
 
 Start developing your business logic, services and interactions as Opera::Operations and benefit of code that is documented, self-explanatory, easy to maintain and debug.
-
 
 ### Specs
 
@@ -105,6 +98,7 @@ end
 ```
 
 Without this extra configuration you will receive:
+
 ```ruby
 NoMethodError:
   undefined method `transaction' for nil:NilClass
@@ -137,6 +131,7 @@ end
 ```
 
 ### Content
+
 [Basic operation](#user-content-basic-operation)
 
 [Example with sanitizing parameters](#user-content-example-with-sanitizing-parameters)
@@ -147,8 +142,6 @@ end
 
 [Passing transaction](#user-content-passing-transaction)
 
-[Benchmark](#user-content-benchmark)
-
 [Success](#user-content-success)
 
 [Finish if](#user-content-finish-if)
@@ -156,6 +149,8 @@ end
 [Inner Operation](#user-content-inner-operation)
 
 [Inner Operations](#user-content-inner-operations)
+
+[Within](#user-content-within)
 
 ## Usage examples
 
@@ -594,71 +589,6 @@ D, [2020-08-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
 #<Opera::Operation::Result:0x0000556528f29058 @errors={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-17 12:10:44", updated_at: "2020-08-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
-### Benchmark
-
-```ruby
-class Profile::Create < Opera::Operation::Base
-  # DEPRECATED
-  # context_accessor :profile
-  context do
-    attr_accessor :profile
-  end
-  # DEPRECATED
-  # dependencies_reader :current_account, :mailer
-  dependencies do
-    attr_reader :current_account, :mailer
-  end
-
-  validate :profile_schema
-
-  benchmark :fast_section do
-    step :create
-    step :update
-  end
-
-  benchmark :slow_section do
-    step :send_email
-    step :output
-  end
-
-  def profile_schema
-    Dry::Validation.Schema do
-      required(:first_name).filled
-    end.call(params)
-  end
-
-  def create
-    self.profile = current_account.profiles.create(params)
-  end
-
-  def update
-    profile.update(updated_at: 1.day.ago)
-  end
-
-  def send_email
-    return true unless mailer
-
-    mailer.send_mail(profile: profile)
-  end
-
-  def output
-    result.output = { model: profile }
-  end
-end
-```
-
-#### Example with information (real and total) from benchmark
-
-```ruby
-Profile::Create.call(params: {
-  first_name: :foo,
-  last_name: :bar
-}, dependencies: {
-  current_account: Account.find(1)
-})
-#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @information={fast_section: {:real=>0.300013706088066e-05, :total=>0.0}, slow_section: {:real=>1.800013706088066e-05, :total=>0.0}}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
-```
-
 ### Success
 
 ```ruby
@@ -785,8 +715,6 @@ class Profile::Create < Opera::Operation::Base
 end
 ```
 
-#### Example with information (real and total) from benchmark
-
 ```ruby
 Profile::Create.call(params: {
   first_name: :foo,
@@ -851,6 +779,7 @@ Profile::Create.call(params: {
 ```
 
 ### Inner Operations
+
 Expects that method returns array of `Opera::Operation::Result`
 
 ```ruby
@@ -888,6 +817,171 @@ Profile::CreateMultiple.call(params: { number: 3 })
 #<Opera::Operation::Result:0x0000564189f38c90 @errors={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
 ```
 
+### Within
+
+`within` wraps one or more steps with a method you define on the operation. The method must `yield` to execute the nested steps. If it does not yield, the nested steps are skipped. Normal break conditions (errors, `finish!`) still apply inside the block.
+
+```ruby
+class Profile::Create < Opera::Operation::Base
+  context do
+    attr_accessor :profile
+  end
+
+  dependencies do
+    attr_reader :current_account
+  end
+
+  step :build
+
+  within :read_from_replica do
+    step :check_duplicate
+    step :validate_quota
+  end
+
+  step :create
+  step :output
+
+  def build
+    self.profile = current_account.profiles.build(params)
+  end
+
+  def check_duplicate
+    result.add_error(:base, 'already exists') if Profile.exists?(email: params[:email])
+  end
+
+  def validate_quota
+    result.add_error(:base, 'quota exceeded') if current_account.profiles.count >= 100
+  end
+
+  def create
+    profile.save!
+  end
+
+  def output
+    result.output = { model: profile }
+  end
+
+  private
+
+  def read_from_replica(&block)
+    ActiveRecord::Base.connected_to(role: :reading, &block)
+  end
+end
+```
+
+`within`-method can also be used inline inside any step method when you need the wrapper for only part of that method's logic:
+
+```ruby
+def some_step
+  value = read_from_replica { Profile.count }
+  result.output = { count: value }
+end
+
+private
+
+def read_from_replica(&block)
+  ActiveRecord::Base.connected_to(role: :reading, &block)
+end
+```
+
+#### Mixing step and operation inside within
+
+`within` can wrap any combination of `step` and `operation` instructions. All of them execute inside the wrapper, and their outputs are available in context afterwards as usual.
+
+```ruby
+class Profile::Create < Opera::Operation::Base
+  context do
+    attr_accessor :profile
+  end
+
+  dependencies do
+    attr_reader :current_account, :quota_checker
+  end
+
+  within :read_from_replica do
+    step :check_duplicate
+    operation :fetch_quota
+  end
+
+  step :create
+  step :output
+
+  def check_duplicate
+    result.add_error(:base, 'already exists') if Profile.exists?(email: params[:email])
+  end
+
+  def fetch_quota
+    quota_checker.call(params: params)
+  end
+
+  def create
+    self.profile = current_account.profiles.create(params)
+  end
+
+  def output
+    result.output = { model: profile, quota: context[:fetch_quota_output] }
+  end
+
+  private
+
+  def read_from_replica(&block)
+    ActiveRecord::Base.connected_to(role: :reading, &block)
+  end
+end
+```
+
+#### Nesting within inside a transaction
+
+`within` can be placed inside a `transaction` block alongside other instructions. If any step or operation inside `within` fails, the error propagates up and the transaction is rolled back as normal.
+
+```ruby
+class Profile::Create < Opera::Operation::Base
+  configure do |config|
+    config.transaction_class = ActiveRecord::Base
+  end
+
+  context do
+    attr_accessor :profile
+  end
+
+  dependencies do
+    attr_reader :current_account, :quota_checker, :audit_logger
+  end
+
+  transaction do
+    within :read_from_replica do
+      step :check_duplicate
+      operation :fetch_quota
+    end
+    operation :write_audit_log
+  end
+
+  step :output
+
+  def check_duplicate
+    result.add_error(:base, 'already exists') if Profile.exists?(email: params[:email])
+  end
+
+  def fetch_quota
+    quota_checker.call(params: params)
+  end
+
+  def write_audit_log
+    audit_logger.call(params: params)
+  end
+
+  def output
+    result.output = { quota: context[:fetch_quota_output] }
+  end
+
+  private
+
+  def read_from_replica(&block)
+    ActiveRecord::Base.connected_to(role: :reading, &block)
+  end
+end
+```
+
 ## Opera::Operation::Result - Instance Methods
 
 Sometimes it may be useful to be able to create an instance of the `Result` with preset `output`.
@@ -898,6 +992,7 @@ Opera::Operation::Result.new(output: 'success')
 ```
 
 >
+
     - success? - [true, false] - Return true if no errors
     - failure? - [true, false] - Return true if any error
     - output   - [Anything]    - Return Anything
@@ -908,7 +1003,9 @@ Opera::Operation::Result.new(output: 'success')
     - add_information(Hash)    - Adss new information - Useful informations for developers
 
 ## Opera::Operation::Base - Instance Methods
+
 >
+
     - context [Hash]          - used to pass information between steps - only for internal usage
     - params [Hash]           - immutable and received in call method
     - dependencies [Hash]     - immutable and received in call method
@@ -921,6 +1018,7 @@ Opera::Operation::Result.new(output: 'success')
 The `context_reader` helper method is designed to facilitate easy access to specified keys within a `context` hash. It dynamically defines a method that acts as a getter for the value associated with a specified key, simplifying data retrieval.
 
 #### Parameters
+
 **key (Symbol):** The key(s) for which the getter and setter methods are to be created. These symbols should correspond to keys in the context hash.
 
 **default (Proc, optional):** A lambda or proc that returns a default value for the key if it is not present in the context hash. This proc is lazily evaluated only when the getter is invoked and the key is not present in the hash.
@@ -993,6 +1091,7 @@ def serializer
   ProfileSerializer.new
 end
 ```
+
 **Conclusion**
 
 For creating instance methods that are meant to be read-only and not stored within a context hash, defining these methods as private is a more suitable and clear approach compared to using context_reader with a default. This method ensures that transient dependencies remain well-encapsulated and are not confused with persistent application state.
@@ -1008,6 +1107,7 @@ The `context|params|depenencies` helper method is designed to enable easy access
 **default (Proc, optional):** A lambda or proc that returns a default value for the key if it is not present in the context hash. This proc is lazily evaluated only when the getter is invoked and the key is not present in the hash.
 
 #### Usage
+
 ```ruby
 context do
   attr_accessor :profile
@@ -1038,7 +1138,9 @@ end
 ```
 
 #### Other methods
+
 >
+
     - step(Symbol)             - single instruction
       - return [Truthly]       - continue operation execution
       - return [False]         - stops operation execution
@@ -1049,6 +1151,8 @@ end
     - transaction(*Symbols)    - list of instructions to be wrapped in transaction
       - return [Truthly]       - continue operation execution
       - return [False] - stops operation execution and breaks transaction/do rollback
+    - within(Symbol, &block)   - wraps nested steps with a custom method that must yield
+      - the named method receives a block and must yield to execute the nested steps
     - call(params: Hash, dependencies: Hash?)
       - return [Opera::Operation::Result]
 
@@ -1061,7 +1165,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/profinda/opera. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/opera/blob/master/CODE_OF_CONDUCT.md).
-
 
 ## License
 

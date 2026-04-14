@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'benchmark'
 require 'dry-validation'
 require 'spec_helper'
 
@@ -1203,88 +1202,438 @@ module Opera
         end
       end
 
-      context 'for benchmark' do
+      context 'for within' do
         let(:operation_class) do
           Class.new(Operation::Base) do
+            context_accessor :value
+            context_accessor :log, default: -> { [] }
+
             step :step_1
-            step :step_2
-            benchmark :step_3
-            benchmark :step_4
-            step :step_5
+            within :with_wrapper do
+              step :step_2
+              step :step_3
+            end
+
+            step :step_4
 
             def step_1
-              false
+              self.value = 0
             end
 
             def step_2
-              true
+              self.value += 10
             end
 
             def step_3
-              true
+              self.value += 5
             end
 
             def step_4
-              1
+              result.output = {
+                value:,
+                log:
+              }
             end
 
-            def step_5
-              true
+            def with_wrapper
+              log << :before
+              yield
+              log << :after
             end
           end
+        end
+
+        it 'executes all steps' do
+          expect(subject.executions).to match_array(%i[step_1 step_2 step_3 step_4])
         end
 
         it 'ends with success' do
           expect(subject).to be_success
         end
 
-        it 'add benchmark info to result' do
-          expect(subject.information[:step_3]).to have_key(:real)
-          expect(subject.information[:step_3]).to have_key(:total)
-          expect(subject.information[:step_4]).to have_key(:real)
-          expect(subject.information[:step_4]).to have_key(:total)
+        it 'processes all the logic correctly to produce value' do
+          expect(subject.output[:value]).to eq(15)
         end
 
-        context 'for failing step' do
+        it 'calls the wrapper method around the nested steps' do
+          expect(subject.output[:log]).to eq(%i[before after])
+        end
+
+        context 'when a step inside within adds an error' do
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              step :step_2
-              benchmark :example do
+              within :with_wrapper do
+                step :step_2
                 step :step_3
-                step :step_4
               end
-              step :step_5
+
+              step :step_4
 
               def step_1
-                false
               end
 
               def step_2
-                false
+                result.add_error(:base, 'inner error')
               end
 
               def step_3
-                finish!
+                raise 'should not be reached'
               end
 
               def step_4
-                1
+                raise 'should not be reached'
               end
 
-              def step_5
-                true
+              def with_wrapper(&block)
+                yield
               end
             end
           end
 
-          it 'executes only first 3 instructions' do
-            expect(subject.executions).to match_array(%i[step_1 step_2 step_3])
+          it 'stops at the failing step inside within' do
+            expect(subject.executions).to match_array(%i[step_1 step_2])
           end
 
-          it 'add benchmark info to result' do
-            expect(subject.information[:example]).to have_key(:real)
-            expect(subject.information[:example]).to have_key(:total)
+          it 'ends with failure' do
+            expect(subject).to be_failure
+          end
+
+          it 'does not execute steps after within' do
+            expect_any_instance_of(operation_class).not_to receive(:step_4)
+            subject
+          end
+        end
+
+        context 'when finish! is called inside within' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              within :with_wrapper do
+                step :step_2
+                step :step_3
+              end
+
+              step :step_4
+
+              def step_1
+              end
+
+              def step_2
+                finish!
+              end
+
+              def step_3
+                raise 'should not be reached'
+              end
+
+              def step_4
+                raise 'should not be reached'
+              end
+
+              def with_wrapper(&block)
+                yield
+              end
+            end
+          end
+
+          it 'stops at finish! inside within' do
+            expect(subject.executions).to match_array(%i[step_1 step_2])
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'does not execute steps after within' do
+            expect_any_instance_of(operation_class).not_to receive(:step_4)
+            subject
+          end
+        end
+
+        context 'when within is used without a block' do
+          it 'raises ArgumentError' do
+            expect do
+              Class.new(Operation::Base) do
+                within :with_wrapper
+                def with_wrapper(&block)
+                  yield
+                end
+              end.call
+            end.to raise_error(ArgumentError)
+          end
+        end
+
+        context 'when the wrapper method does not yield' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              within :with_wrapper do
+                step :step_2
+              end
+
+              step :step_3
+
+              def step_1
+              end
+
+              def step_2
+                raise 'should not be reached'
+              end
+
+              def step_3
+                result.output = :reached
+              end
+
+              # intentionally does not yield
+              def with_wrapper(&block)
+              end
+            end
+          end
+
+          it 'skips nested steps when the wrapper does not yield' do
+            expect_any_instance_of(operation_class).not_to receive(:step_2)
+            subject
+          end
+
+          it 'still runs steps after within' do
+            expect(subject.output).to eq(:reached)
+          end
+        end
+
+        context 'when within raises an exception from the wrapper' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              within :with_wrapper do
+                step :step_1
+              end
+
+              def step_1
+              end
+
+              def with_wrapper(&block)
+                raise 'wrapper error'
+              end
+            end
+          end
+
+          it 'propagates the exception' do
+            expect { subject }.to raise_error(RuntimeError, 'wrapper error')
+          end
+        end
+
+        context 'when within contains both step and operation' do
+          let(:inner_operation) do
+            Class.new(Operation::Base) do
+              step :fetch
+
+              def fetch
+                result.output = { fetched: true }
+              end
+            end
+          end
+
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :log, default: -> { [] }
+
+              within :with_wrapper do
+                step :calculate
+                operation :fetch_something
+              end
+
+              step :output
+
+              def calculate
+                context[:calculated] = 42
+              end
+
+              def fetch_something
+                dependencies[:inner_operation].call
+              end
+
+              def output
+                result.output = {
+                  calculated: context[:calculated],
+                  fetched: context[:fetch_something_output],
+                  log: log
+                }
+              end
+
+              def with_wrapper
+                log << :before
+                yield
+                log << :after
+              end
+            end
+          end
+
+          subject { operation_class.call(dependencies: { inner_operation: inner_operation }) }
+
+          it 'executes all instructions' do
+            expect(subject.executions).to contain_exactly(:calculate, { fetch_something: [:fetch] }, :output)
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'runs the wrapper around both the step and the operation' do
+            expect(subject.output[:log]).to eq(%i[before after])
+          end
+
+          it 'produces correct output from the step' do
+            expect(subject.output[:calculated]).to eq(42)
+          end
+
+          it 'produces correct output from the operation' do
+            expect(subject.output[:fetched]).to eq({ fetched: true })
+          end
+        end
+
+        context 'when within is nested inside a transaction' do
+          let(:transaction_class) do
+            Class.new do
+              def self.transaction
+                yield
+              end
+            end
+          end
+
+          let(:fetch_operation) do
+            Class.new(Operation::Base) do
+              step :fetch
+
+              def fetch
+                result.output = { fetched: true }
+              end
+            end
+          end
+
+          let(:update_operation) do
+            Class.new(Operation::Base) do
+              step :update
+
+              def update
+                result.output = { updated: true }
+              end
+            end
+          end
+
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context_accessor :log, default: -> { [] }
+
+              transaction do
+                within :with_wrapper do
+                  step :calculate
+                  operation :fetch_something
+                end
+
+                operation :update_records
+              end
+
+              step :output
+
+              def calculate
+                context[:calculated] = 42
+              end
+
+              def fetch_something
+                dependencies[:fetch_operation].call
+              end
+
+              def update_records
+                dependencies[:update_operation].call
+              end
+
+              def output
+                result.output = {
+                  calculated: context[:calculated],
+                  fetched: context[:fetch_something_output],
+                  updated: context[:update_records_output],
+                  log: log
+                }
+              end
+
+              def with_wrapper
+                log << :before
+                yield
+                log << :after
+              end
+            end
+          end
+
+          before do
+            Operation::Config.configure do |config|
+              config.transaction_class = transaction_class
+              config.transaction_options = nil
+            end
+          end
+
+          after do
+            Operation::Config.configure do |config|
+              config.transaction_class = nil
+              config.transaction_options = nil
+            end
+          end
+
+          subject do
+            operation_class.call(dependencies: {
+              fetch_operation: fetch_operation,
+              update_operation: update_operation
+            })
+          end
+
+          it 'executes all instructions' do
+            expect(subject.executions).to contain_exactly({ fetch_something: [:fetch] }, :calculate,
+                                                          { update_records: [:update] }, :output)
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'runs the wrapper around the nested instructions inside the transaction' do
+            expect(subject.output[:log]).to eq(%i[before after])
+          end
+
+          it 'produces correct output from the step inside within' do
+            expect(subject.output[:calculated]).to eq(42)
+          end
+
+          it 'produces correct output from the operation inside within' do
+            expect(subject.output[:fetched]).to eq({ fetched: true })
+          end
+
+          it 'produces correct output from the operation alongside within inside the transaction' do
+            expect(subject.output[:updated]).to eq({ updated: true })
+          end
+
+          context 'when the operation inside within fails' do
+            let(:fetch_operation) do
+              Class.new(Operation::Base) do
+                step :fetch
+
+                def fetch
+                  result.add_error(:base, 'fetch failed')
+                end
+              end
+            end
+
+            it 'rolls back the transaction' do
+              expect(transaction_class).to receive(:transaction).and_call_original
+              subject
+            end
+
+            it 'ends with failure' do
+              expect(subject).to be_failure
+            end
+
+            it 'does not execute instructions after the transaction' do
+              expect_any_instance_of(operation_class).not_to receive(:output)
+              subject
+            end
           end
         end
       end
