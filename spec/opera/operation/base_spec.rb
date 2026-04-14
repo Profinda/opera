@@ -1296,7 +1296,7 @@ module Opera
             context_accessor :log, default: -> { [] }
 
             step :step_1
-            within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+            within :with_wrapper do
               step :step_2
               step :step_3
             end
@@ -1350,7 +1350,7 @@ module Opera
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do
                 step :step_2
                 step :step_3
               end
@@ -1396,7 +1396,7 @@ module Opera
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do
                 step :step_2
                 step :step_3
               end
@@ -1455,7 +1455,7 @@ module Opera
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do
                 step :step_2
               end
 
@@ -1491,7 +1491,7 @@ module Opera
         context 'when within raises an exception from the wrapper' do
           let(:operation_class) do
             Class.new(Operation::Base) do
-              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do
                 step :step_1
               end
 
@@ -1524,7 +1524,7 @@ module Opera
             Class.new(Operation::Base) do
               context_accessor :log, default: -> { [] }
 
-              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do
                 step :calculate
                 operation :fetch_something
               end
@@ -1612,7 +1612,7 @@ module Opera
               context_accessor :log, default: -> { [] }
 
               transaction do
-                within :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                within :with_wrapper do
                   step :calculate
                   operation :fetch_something
                 end
