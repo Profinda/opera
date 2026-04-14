@@ -156,7 +156,7 @@ end
 
 [Inner Operations](#user-content-inner-operations)
 
-[Around](#user-content-around)
+[Within](#user-content-within)
 
 ## Usage examples
 
@@ -890,9 +890,9 @@ Profile::CreateMultiple.call(params: { number: 3 })
 #<Opera::Operation::Result:0x0000564189f38c90 @errors={}, @information={}, @executions=[{:create_multiple=>[[:validate, :create], [:validate, :create], [:validate, :create], [:validate, :create]]}, :output], @output=[{:model=>"Profile 1"}, {:model=>"Profile 7"}, {:model=>"Profile 69"}, {:model=>"Profile 92"}]>
 ```
 
-### Around
+### Within
 
-`around` wraps one or more steps with a method you define on the operation. The method must `yield` to execute the nested steps. If it does not yield, the nested steps are skipped. Normal break conditions (errors, `finish!`) still apply inside the block.
+`within` wraps one or more steps with a method you define on the operation. The method must `yield` to execute the nested steps. If it does not yield, the nested steps are skipped. Normal break conditions (errors, `finish!`) still apply inside the block.
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
@@ -906,7 +906,7 @@ class Profile::Create < Opera::Operation::Base
 
   step :build
 
-  around :read_from_replica do
+  within :read_from_replica do
     step :check_duplicate
     step :validate_quota
   end
@@ -942,7 +942,7 @@ class Profile::Create < Opera::Operation::Base
 end
 ```
 
-`around` method can also be used inline inside any step method when you need the wrapper for only part of that method's logic:
+`within`-method can also be used inline inside any step method when you need the wrapper for only part of that method's logic:
 
 ```ruby
 def some_step
@@ -952,14 +952,14 @@ end
 
 private
 
-def read_from_replica
+def read_from_replica(&block)
   ActiveRecord::Base.connected_to(role: :reading, &block)
 end
 ```
 
-#### Mixing step and operation inside around
+#### Mixing step and operation inside within
 
-`around` can wrap any combination of `step` and `operation` instructions. All of them execute inside the wrapper, and their outputs are available in context afterwards as usual.
+`within` can wrap any combination of `step` and `operation` instructions. All of them execute inside the wrapper, and their outputs are available in context afterwards as usual.
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
@@ -971,7 +971,7 @@ class Profile::Create < Opera::Operation::Base
     attr_reader :current_account, :quota_checker
   end
 
-  around :read_from_replica do
+  within :read_from_replica do
     step :check_duplicate
     operation :fetch_quota
   end
@@ -997,15 +997,15 @@ class Profile::Create < Opera::Operation::Base
 
   private
 
-  def read_from_replica
+  def read_from_replica(&block)
     ActiveRecord::Base.connected_to(role: :reading, &block)
   end
 end
 ```
 
-#### Nesting around inside a transaction
+#### Nesting within inside a transaction
 
-`around` can be placed inside a `transaction` block alongside other instructions. If any step or operation inside `around` fails, the error propagates up and the transaction is rolled back as normal.
+`within` can be placed inside a `transaction` block alongside other instructions. If any step or operation inside `within` fails, the error propagates up and the transaction is rolled back as normal.
 
 ```ruby
 class Profile::Create < Opera::Operation::Base
@@ -1022,7 +1022,7 @@ class Profile::Create < Opera::Operation::Base
   end
 
   transaction do
-    around :read_from_replica do
+    within :read_from_replica do
       step :check_duplicate
       operation :fetch_quota
     end
@@ -1049,7 +1049,7 @@ class Profile::Create < Opera::Operation::Base
 
   private
 
-  def read_from_replica
+  def read_from_replica(&block)
     ActiveRecord::Base.connected_to(role: :reading, &block)
   end
 end
@@ -1224,7 +1224,7 @@ end
     - transaction(*Symbols)    - list of instructions to be wrapped in transaction
       - return [Truthly]       - continue operation execution
       - return [False] - stops operation execution and breaks transaction/do rollback
-    - around(Symbol, &block)   - wraps nested steps with a custom method that must yield
+    - within(Symbol, &block)   - wraps nested steps with a custom method that must yield
       - the named method receives a block and must yield to execute the nested steps
     - call(params: Hash, dependencies: Hash?)
       - return [Opera::Operation::Result]

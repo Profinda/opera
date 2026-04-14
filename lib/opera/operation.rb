@@ -15,7 +15,7 @@ require 'opera/operation/instructions/executors/validate'
 require 'opera/operation/instructions/executors/operation'
 require 'opera/operation/instructions/executors/operations'
 require 'opera/operation/instructions/executors/step'
-require 'opera/operation/instructions/executors/around'
+require 'opera/operation/instructions/executors/within'
 
 module Opera
   module Operation

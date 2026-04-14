@@ -1289,14 +1289,14 @@ module Opera
         end
       end
 
-      context 'for around' do
+      context 'for within' do
         let(:operation_class) do
           Class.new(Operation::Base) do
             context_accessor :value
             context_accessor :log, default: -> { [] }
 
             step :step_1
-            around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+            within :with_wrapper do # rubocop:disable RSpec/AroundBlock
               step :step_2
               step :step_3
             end
@@ -1346,11 +1346,11 @@ module Opera
           expect(subject.output[:log]).to eq(%i[before after])
         end
 
-        context 'when a step inside around adds an error' do
+        context 'when a step inside within adds an error' do
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                 step :step_2
                 step :step_3
               end
@@ -1378,7 +1378,7 @@ module Opera
             end
           end
 
-          it 'stops at the failing step inside around' do
+          it 'stops at the failing step inside within' do
             expect(subject.executions).to match_array(%i[step_1 step_2])
           end
 
@@ -1386,17 +1386,17 @@ module Opera
             expect(subject).to be_failure
           end
 
-          it 'does not execute steps after around' do
+          it 'does not execute steps after within' do
             expect_any_instance_of(operation_class).not_to receive(:step_4)
             subject
           end
         end
 
-        context 'when finish! is called inside around' do
+        context 'when finish! is called inside within' do
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                 step :step_2
                 step :step_3
               end
@@ -1424,7 +1424,7 @@ module Opera
             end
           end
 
-          it 'stops at finish! inside around' do
+          it 'stops at finish! inside within' do
             expect(subject.executions).to match_array(%i[step_1 step_2])
           end
 
@@ -1432,17 +1432,17 @@ module Opera
             expect(subject).to be_success
           end
 
-          it 'does not execute steps after around' do
+          it 'does not execute steps after within' do
             expect_any_instance_of(operation_class).not_to receive(:step_4)
             subject
           end
         end
 
-        context 'when around is used without a block' do
+        context 'when within is used without a block' do
           it 'raises ArgumentError' do
             expect do
               Class.new(Operation::Base) do
-                around :with_wrapper
+                within :with_wrapper
                 def with_wrapper(&block)
                   yield
                 end
@@ -1455,7 +1455,7 @@ module Opera
           let(:operation_class) do
             Class.new(Operation::Base) do
               step :step_1
-              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                 step :step_2
               end
 
@@ -1483,15 +1483,15 @@ module Opera
             subject
           end
 
-          it 'still runs steps after around' do
+          it 'still runs steps after within' do
             expect(subject.output).to eq(:reached)
           end
         end
 
-        context 'when around raises an exception from the wrapper' do
+        context 'when within raises an exception from the wrapper' do
           let(:operation_class) do
             Class.new(Operation::Base) do
-              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                 step :step_1
               end
 
@@ -1509,7 +1509,7 @@ module Opera
           end
         end
 
-        context 'when around contains both step and operation' do
+        context 'when within contains both step and operation' do
           let(:inner_operation) do
             Class.new(Operation::Base) do
               step :fetch
@@ -1524,7 +1524,7 @@ module Opera
             Class.new(Operation::Base) do
               context_accessor :log, default: -> { [] }
 
-              around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+              within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                 step :calculate
                 operation :fetch_something
               end
@@ -1578,7 +1578,7 @@ module Opera
           end
         end
 
-        context 'when around is nested inside a transaction' do
+        context 'when within is nested inside a transaction' do
           let(:transaction_class) do
             Class.new do
               def self.transaction
@@ -1612,7 +1612,7 @@ module Opera
               context_accessor :log, default: -> { [] }
 
               transaction do
-                around :with_wrapper do # rubocop:disable RSpec/AroundBlock
+                within :with_wrapper do # rubocop:disable RSpec/AroundBlock
                   step :calculate
                   operation :fetch_something
                 end
@@ -1685,19 +1685,19 @@ module Opera
             expect(subject.output[:log]).to eq(%i[before after])
           end
 
-          it 'produces correct output from the step inside around' do
+          it 'produces correct output from the step inside within' do
             expect(subject.output[:calculated]).to eq(42)
           end
 
-          it 'produces correct output from the operation inside around' do
+          it 'produces correct output from the operation inside within' do
             expect(subject.output[:fetched]).to eq({ fetched: true })
           end
 
-          it 'produces correct output from the operation alongside around inside the transaction' do
+          it 'produces correct output from the operation alongside within inside the transaction' do
             expect(subject.output[:updated]).to eq({ updated: true })
           end
 
-          context 'when the operation inside around fails' do
+          context 'when the operation inside within fails' do
             let(:fetch_operation) do
               Class.new(Operation::Base) do
                 step :fetch
