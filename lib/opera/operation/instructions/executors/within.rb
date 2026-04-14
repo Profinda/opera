@@ -13,7 +13,7 @@ module Opera
             raise ArgumentError, 'within requires a block with at least one instruction' if nested_instructions.nil?
 
             operation.send(wrapper_method) do
-              super
+              evaluate_instructions(nested_instructions)
             end
           end
         end
