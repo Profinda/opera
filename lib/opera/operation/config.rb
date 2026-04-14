@@ -47,7 +47,7 @@ module Opera
         end
 
         def development_mode?
-          mode == DEFAULT_MODE
+          mode == DEVELOPMENT_MODE
         end
 
         def production_mode?
