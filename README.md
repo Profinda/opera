@@ -75,10 +75,6 @@ class A < Opera::Operation::Base
     step :validate_relationships
   end
 
-  benchmark do
-    success :hal_sync
-  end
-
   success do
     step :send_mail
     step :report_to_audit_log
@@ -145,8 +141,6 @@ end
 [Failing transaction](#user-content-failing-transaction)
 
 [Passing transaction](#user-content-passing-transaction)
-
-[Benchmark](#user-content-benchmark)
 
 [Success](#user-content-success)
 
@@ -595,71 +589,6 @@ D, [2020-08-17T12:10:44.898132 #2741] DEBUG -- :    (10.3ms)  COMMIT
 #<Opera::Operation::Result:0x0000556528f29058 @errors={}, @information={}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 47, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-17 12:10:44", updated_at: "2020-08-16 12:10:44", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
 ```
 
-### Benchmark
-
-```ruby
-class Profile::Create < Opera::Operation::Base
-  # DEPRECATED
-  # context_accessor :profile
-  context do
-    attr_accessor :profile
-  end
-  # DEPRECATED
-  # dependencies_reader :current_account, :mailer
-  dependencies do
-    attr_reader :current_account, :mailer
-  end
-
-  validate :profile_schema
-
-  benchmark :fast_section do
-    step :create
-    step :update
-  end
-
-  benchmark :slow_section do
-    step :send_email
-    step :output
-  end
-
-  def profile_schema
-    Dry::Validation.Schema do
-      required(:first_name).filled
-    end.call(params)
-  end
-
-  def create
-    self.profile = current_account.profiles.create(params)
-  end
-
-  def update
-    profile.update(updated_at: 1.day.ago)
-  end
-
-  def send_email
-    return true unless mailer
-
-    mailer.send_mail(profile: profile)
-  end
-
-  def output
-    result.output = { model: profile }
-  end
-end
-```
-
-#### Example with information (real and total) from benchmark
-
-```ruby
-Profile::Create.call(params: {
-  first_name: :foo,
-  last_name: :bar
-}, dependencies: {
-  current_account: Account.find(1)
-})
-#<Opera::Operation::Result:0x007ff414a01238 @errors={}, @information={fast_section: {:real=>0.300013706088066e-05, :total=>0.0}, slow_section: {:real=>1.800013706088066e-05, :total=>0.0}}, @executions=[:profile_schema, :create, :update, :send_email, :output], @output={:model=>#<Profile id: 30, user_id: nil, linkedin_uid: nil, picture: nil, headline: nil, summary: nil, first_name: "foo", last_name: "bar", created_at: "2020-08-19 10:46:00", updated_at: "2020-08-18 10:46:00", agree_to_terms_and_conditions: nil, registration_status: "", account_id: 1, start_date: nil, supervisor_id: nil, picture_processing: false, statistics: {}, data: {}, notification_timestamps: {}, suggestions: {}, notification_settings: {}, contact_information: []>}>
-```
-
 ### Success
 
 ```ruby
@@ -785,8 +714,6 @@ class Profile::Create < Opera::Operation::Base
   end
 end
 ```
-
-#### Example with information (real and total) from benchmark
 
 ```ruby
 Profile::Create.call(params: {

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'benchmark'
 require 'dry-validation'
 require 'spec_helper'
 
@@ -1199,92 +1198,6 @@ module Opera
           it 'adds the output to the context of the operations' do
             expect(subject.output.size).to eq(3)
             expect(subject.output).to all(eq(example: 'output'))
-          end
-        end
-      end
-
-      context 'for benchmark' do
-        let(:operation_class) do
-          Class.new(Operation::Base) do
-            step :step_1
-            step :step_2
-            benchmark :step_3
-            benchmark :step_4
-            step :step_5
-
-            def step_1
-              false
-            end
-
-            def step_2
-              true
-            end
-
-            def step_3
-              true
-            end
-
-            def step_4
-              1
-            end
-
-            def step_5
-              true
-            end
-          end
-        end
-
-        it 'ends with success' do
-          expect(subject).to be_success
-        end
-
-        it 'add benchmark info to result' do
-          expect(subject.information[:step_3]).to have_key(:real)
-          expect(subject.information[:step_3]).to have_key(:total)
-          expect(subject.information[:step_4]).to have_key(:real)
-          expect(subject.information[:step_4]).to have_key(:total)
-        end
-
-        context 'for failing step' do
-          let(:operation_class) do
-            Class.new(Operation::Base) do
-              step :step_1
-              step :step_2
-              benchmark :example do
-                step :step_3
-                step :step_4
-              end
-              step :step_5
-
-              def step_1
-                false
-              end
-
-              def step_2
-                false
-              end
-
-              def step_3
-                finish!
-              end
-
-              def step_4
-                1
-              end
-
-              def step_5
-                true
-              end
-            end
-          end
-
-          it 'executes only first 3 instructions' do
-            expect(subject.executions).to match_array(%i[step_1 step_2 step_3])
-          end
-
-          it 'add benchmark info to result' do
-            expect(subject.information[:example]).to have_key(:real)
-            expect(subject.information[:example]).to have_key(:total)
           end
         end
       end

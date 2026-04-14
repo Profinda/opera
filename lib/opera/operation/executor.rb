@@ -44,8 +44,6 @@ module Opera
           Instructions::Executors::Validate.new(operation).call(instruction)
         when :transaction
           Instructions::Executors::Transaction.new(operation).call(instruction)
-        when :benchmark
-          Instructions::Executors::Benchmark.new(operation).call(instruction)
         when :finish_if
           Instructions::Executors::FinishIf.new(operation).call(instruction)
         when :within

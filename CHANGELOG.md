@@ -3,6 +3,7 @@
 ### 0.5.0 - Apr 13, 2026
 
 - Add `within` executor for wrapping one or more steps with a custom block method
+- Remove `benchmark` executor
 
 ### 0.4.1 - Feb 18, 2026
 - Add parsed errors to default `output!` exception message
