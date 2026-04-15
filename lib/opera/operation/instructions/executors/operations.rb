@@ -9,8 +9,7 @@ module Opera
 
           # rubocop:disable Metrics/MethodLength
           def call(instruction)
-            instruction[:kind] = :step
-            operations_results = super
+            operations_results = execute_step(instruction)
 
             case operations_results
             when Array

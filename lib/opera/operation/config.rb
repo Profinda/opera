@@ -17,17 +17,13 @@ module Opera
         @instrumentation_class = self.class.instrumentation_class
 
         @mode = self.class.mode || DEVELOPMENT_MODE
-        @reporter = custom_reporter || self.class.reporter
+        @reporter = self.class.reporter
 
         validate!
       end
 
       def configure
         yield self
-      end
-
-      def custom_reporter
-        Rails.application.config.x.reporter.presence if defined?(Rails)
       end
 
       private
@@ -47,7 +43,7 @@ module Opera
         end
 
         def development_mode?
-          mode == DEFAULT_MODE
+          mode == DEVELOPMENT_MODE
         end
 
         def production_mode?

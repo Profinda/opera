@@ -1,5 +1,13 @@
 # Opera Changelog
 
+### 0.5.1 - Apr 15, 2026
+
+- Remove `Marshal.dump` from instruction execution for ~40-55% throughput improvement
+- Fix `Config.development_mode?` referencing non-existent constant
+- Remove implicit `Rails.application.config.x.reporter` lookup from Config
+- Restructure README into quick-start guide with examples moved to `docs/examples/`
+- Add benchmark script for operation performance testing
+
 ### 0.5.0 - Apr 13, 2026
 
 - Add `within` executor for wrapping one or more steps with a custom block method

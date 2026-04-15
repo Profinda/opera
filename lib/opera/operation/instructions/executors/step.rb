@@ -6,12 +6,7 @@ module Opera
       module Executors
         class Step < Executor
           def call(instruction)
-            method = instruction[:method]
-
-            Instrumentation.new(operation).instrument(name: "##{method}", level: :step) do
-              operation.result.add_execution(method) unless production_mode?
-              operation.send(method)
-            end
+            execute_step(instruction)
           end
         end
       end

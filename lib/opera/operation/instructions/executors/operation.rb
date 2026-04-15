@@ -6,8 +6,7 @@ module Opera
       module Executors
         class Operation < Executor
           def call(instruction)
-            instruction[:kind] = :step
-            operation_result = super
+            operation_result = execute_step(instruction)
             save_information(operation_result)
 
             if operation_result.success?

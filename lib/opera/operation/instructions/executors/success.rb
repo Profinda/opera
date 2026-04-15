@@ -6,8 +6,11 @@ module Opera
       module Executors
         class Success < Executor
           def call(instruction)
-            instruction[:kind] = :step
-            super
+            if instruction[:instructions]
+              evaluate_instructions(instruction[:instructions])
+            else
+              execute_step(instruction)
+            end
           end
 
           def break_condition

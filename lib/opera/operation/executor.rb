@@ -20,12 +20,21 @@ module Opera
       end
 
       def evaluate_instructions(instructions = [])
-        instruction_copy = Marshal.load(Marshal.dump(instructions))
-
-        while instruction_copy.any?
-          instruction = instruction_copy.shift
+        instructions.each do |instruction|
           evaluate_instruction(instruction)
           break if break_condition
+        end
+      end
+
+      # Executes the operation method named in the instruction, instruments it,
+      # and records the execution. This is the shared primitive that all executors
+      # use to invoke a step method without mutating the instruction hash.
+      def execute_step(instruction)
+        method = instruction[:method]
+
+        Instrumentation.new(operation).instrument(name: "##{method}", level: :step) do
+          result.add_execution(method) unless production_mode?
+          operation.send(method)
         end
       end
 

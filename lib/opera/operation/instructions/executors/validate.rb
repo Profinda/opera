@@ -12,8 +12,7 @@ module Opera
           private
 
           def evaluate_instruction(instruction)
-            instruction[:kind] = :step
-            validation_result = super
+            validation_result = execute_step(instruction)
 
             case validation_result
             when Opera::Operation::Result
