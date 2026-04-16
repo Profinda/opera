@@ -15,6 +15,7 @@ require 'opera/operation/instructions/executors/operation'
 require 'opera/operation/instructions/executors/operations'
 require 'opera/operation/instructions/executors/step'
 require 'opera/operation/instructions/executors/within'
+require 'opera/operation/instructions/executors/always'
 
 module Opera
   module Operation

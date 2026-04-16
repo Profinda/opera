@@ -4,7 +4,7 @@
 #
 # Exercises the full execution path: step dispatch, instruction iteration,
 # context accessors, validate, transaction, success, finish_if, operation,
-# operations, and within -- with nested inner operations and loops to
+# operations, within, and always -- with nested inner operations and loops to
 # simulate realistic workloads.
 #
 # Usage:
@@ -122,7 +122,9 @@ ComplexOperation = Class.new(Opera::Operation::Base) do
     step :log_audit
   end
 
-  step :output
+  step :processing_error
+
+  always :output
 
   def schema
     Opera::Operation::Result.new(output: params)
@@ -163,6 +165,10 @@ ComplexOperation = Class.new(Opera::Operation::Base) do
 
   def log_audit
     context[:audited] = true
+  end
+
+  def processing_error
+    result.add_error(:base, 'processing failed')
   end
 
   def output
@@ -281,6 +287,43 @@ BatchOperation = Class.new(Opera::Operation::Base) do
 end
 
 # ---------------------------------------------------------------------------
+# Always operation — exercises always steps on both success and failure paths
+# ---------------------------------------------------------------------------
+AlwaysOperation = Class.new(Opera::Operation::Base) do
+  context do
+    attr_accessor :log, default: -> { [] }
+  end
+
+  step :prepare
+  step :process
+  always :audit
+  always :cleanup
+
+  def prepare
+    log << :prepare
+    context[:value] = params.fetch(:value, 0)
+  end
+
+  def process
+    if params[:fail]
+      result.add_error(:base, 'processing failed')
+    else
+      context[:value] *= 2
+      log << :process
+    end
+  end
+
+  def audit
+    log << (result.success? ? :audit_success : :audit_failure)
+    result.output = { value: context[:value], log: log, success: result.success?, failure: result.failure? }
+  end
+
+  def cleanup
+    log << :cleanup
+  end
+end
+
+# ---------------------------------------------------------------------------
 # Benchmark
 # ---------------------------------------------------------------------------
 ITERATIONS = 1000
@@ -288,6 +331,8 @@ PARAMS = { name: 'benchmark', batch_size: 5 }.freeze
 BATCH_PARAMS = { count: 5 }.freeze
 VALIDATION_PARAMS = { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com' }.freeze
 WITHIN_PARAMS = {}.freeze
+ALWAYS_SUCCESS_PARAMS = { value: 21 }.freeze
+ALWAYS_FAILURE_PARAMS = { value: 21, fail: true }.freeze
 
 # Warm up
 3.times do
@@ -295,6 +340,8 @@ WITHIN_PARAMS = {}.freeze
   BatchOperation.call(params: BATCH_PARAMS)
   ValidationOperation.call(params: VALIDATION_PARAMS)
   WithinOperation.call(params: WITHIN_PARAMS)
+  AlwaysOperation.call(params: ALWAYS_SUCCESS_PARAMS)
+  AlwaysOperation.call(params: ALWAYS_FAILURE_PARAMS)
 end
 
 puts "Opera v#{Opera::VERSION} — #{ITERATIONS} iterations each"
@@ -320,6 +367,14 @@ Benchmark.bm(35) do |x|
 
   x.report('LeafOperation (minimal):') do
     ITERATIONS.times { LeafOperation.call(params: { n: 42 }) }
+  end
+
+  x.report('AlwaysOperation (success path):') do
+    ITERATIONS.times { AlwaysOperation.call(params: ALWAYS_SUCCESS_PARAMS) }
+  end
+
+  x.report('AlwaysOperation (failure path):') do
+    ITERATIONS.times { AlwaysOperation.call(params: ALWAYS_FAILURE_PARAMS) }
   end
 
   # Total operations executed in ComplexOperation run:

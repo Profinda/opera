@@ -1638,6 +1638,426 @@ module Opera
         end
       end
 
+      context 'for always' do
+        context 'when all steps succeed' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              step :step_2
+              always :cleanup
+
+              def step_1
+                true
+              end
+
+              def step_2
+                result.output = :done
+              end
+
+              def cleanup
+                context[:cleaned_up] = true
+              end
+            end
+          end
+
+          it 'executes always step' do
+            expect_any_instance_of(operation_class).to receive(:cleanup).and_call_original
+            subject
+          end
+
+          it 'ends with success' do
+            expect(subject).to be_success
+          end
+
+          it 'includes always step in executions' do
+            expect(subject.executions).to match_array(%i[step_1 step_2 cleanup])
+          end
+        end
+
+        context 'when a step adds an error (failure)' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              step :step_2
+              step :step_3
+              always :cleanup
+
+              def step_1
+                true
+              end
+
+              def step_2
+                result.add_error(:base, 'something went wrong')
+              end
+
+              def step_3
+                raise 'should not be reached'
+              end
+
+              def cleanup
+              end
+            end
+          end
+
+          it 'does not execute step_3' do
+            expect_any_instance_of(operation_class).not_to receive(:step_3)
+            subject
+          end
+
+          it 'executes the always step' do
+            expect_any_instance_of(operation_class).to receive(:cleanup).and_call_original
+            subject
+          end
+
+          it 'ends with failure' do
+            expect(subject).to be_failure
+          end
+
+          it 'includes always step in executions' do
+            expect(subject.executions).to match_array(%i[step_1 step_2 cleanup])
+          end
+        end
+
+        context 'when operation finishes early' do
+          context 'with finish! called in a step' do
+            let(:operation_class) do
+              Class.new(Operation::Base) do
+                step :step_1
+                step :step_2
+                step :step_3
+                always :cleanup
+
+                def step_1
+                  finish!
+                end
+
+                def step_2
+                  raise 'should not be reached'
+                end
+
+                def step_3
+                  raise 'should not be reached'
+                end
+
+                def cleanup
+                end
+              end
+            end
+
+            it 'does not execute steps after finish!' do
+              expect_any_instance_of(operation_class).not_to receive(:step_2)
+              expect_any_instance_of(operation_class).not_to receive(:step_3)
+              subject
+            end
+
+            it 'executes the always step' do
+              expect_any_instance_of(operation_class).to receive(:cleanup).and_call_original
+              subject
+            end
+
+            it 'ends with success' do
+              expect(subject).to be_success
+            end
+
+            it 'includes always step in executions' do
+              expect(subject.executions).to match_array(%i[step_1 cleanup])
+            end
+          end
+
+          context 'with finish_if DSL' do
+            let(:operation_class) do
+              Class.new(Operation::Base) do
+                step :step_1
+                finish_if :done?
+                step :step_2
+                always :cleanup
+
+                def step_1
+                end
+
+                def done?
+                  true
+                end
+
+                def step_2
+                  raise 'should not be reached'
+                end
+
+                def cleanup
+                  result.output = { success: result.success?, failure: result.failure? }
+                end
+              end
+            end
+
+            it 'does not execute step_2' do
+              expect_any_instance_of(operation_class).not_to receive(:step_2)
+              subject
+            end
+
+            it 'executes the always step' do
+              expect_any_instance_of(operation_class).to receive(:cleanup).and_call_original
+              subject
+            end
+
+            it 'ends with success' do
+              expect(subject).to be_success
+            end
+
+            it 'always step observes correct result state' do
+              expect(subject.output).to eq(success: true, failure: false)
+            end
+
+            it 'includes finish_if and always in executions' do
+              expect(subject.executions).to eq(%i[step_1 done? cleanup])
+            end
+          end
+        end
+
+        context 'with multiple always steps' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1
+              step :step_2
+              always :cleanup_1
+              always :cleanup_2
+
+              def step_1
+                true
+              end
+
+              def step_2
+                result.add_error(:base, 'failure')
+              end
+
+              def cleanup_1
+              end
+
+              def cleanup_2
+              end
+            end
+          end
+
+          it 'executes all always steps' do
+            expect_any_instance_of(operation_class).to receive(:cleanup_1).and_call_original
+            expect_any_instance_of(operation_class).to receive(:cleanup_2).and_call_original
+            subject
+          end
+
+          it 'ends with failure' do
+            expect(subject).to be_failure
+          end
+
+          it 'includes all always steps in executions' do
+            expect(subject.executions).to match_array(%i[step_1 step_2 cleanup_1 cleanup_2])
+          end
+        end
+
+        context 'when always step inspects result state' do
+          context 'when the operation succeeds' do
+            let(:operation_class) do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :report
+
+                def step_1
+                end
+
+                def report
+                  result.output = { success: result.success?, failure: result.failure? }
+                end
+              end
+            end
+
+            it 'has access to result state inside always step' do
+              expect(subject.output).to eq(success: true, failure: false)
+            end
+          end
+
+          context 'when the operation fails' do
+            let(:operation_class) do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :report
+
+                def step_1
+                  result.add_error(:base, 'something went wrong')
+                end
+
+                def report
+                  result.output = { success: result.success?, failure: result.failure? }
+                end
+              end
+            end
+
+            it 'has access to result state inside always step' do
+              expect(subject.output).to eq(success: false, failure: true)
+            end
+
+            it 'ends with failure' do
+              expect(subject).to be_failure
+            end
+          end
+        end
+
+        context 'for invalid placement' do
+          it 'raises when a step follows always' do
+            expect do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :cleanup
+                step :step_2
+
+                def step_1
+                end
+
+                def cleanup
+                end
+
+                def step_2
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot appear after `always`/)
+          end
+
+          it 'raises when an operation follows always' do
+            expect do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :cleanup
+                operation :inner_op
+
+                def step_1
+                end
+
+                def cleanup
+                end
+
+                def inner_op
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot appear after `always`/)
+          end
+
+          it 'raises when a transaction block follows always' do
+            expect do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :cleanup
+                transaction do
+                  step :step_2
+                end
+
+                def step_1
+                end
+
+                def cleanup
+                end
+
+                def step_2
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot appear after `always`/)
+          end
+
+          it 'raises when a within block follows always' do
+            expect do
+              Class.new(Operation::Base) do
+                step :step_1
+                always :cleanup
+                within :wrapper do
+                  step :step_2
+                end
+
+                def step_1
+                end
+
+                def cleanup
+                end
+
+                def step_2
+                end
+
+                def wrapper
+                  yield
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot appear after `always`/)
+          end
+
+          it 'raises when always is used inside a transaction block' do
+            expect do
+              Class.new(Operation::Base) do
+                transaction do
+                  step :step_1
+                  always :cleanup
+                end
+
+                def step_1
+                end
+
+                def cleanup
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot be used inside a block/)
+          end
+
+          it 'raises when always is used inside a within block' do
+            expect do
+              Class.new(Operation::Base) do
+                within :wrapper do
+                  step :step_1
+                  always :cleanup
+                end
+
+                def step_1
+                end
+
+                def cleanup
+                end
+
+                def wrapper
+                  yield
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot be used inside a block/)
+          end
+
+          it 'raises when always is used inside a success block' do
+            expect do
+              Class.new(Operation::Base) do
+                success do
+                  step :step_1
+                  always :cleanup
+                end
+
+                def step_1
+                end
+
+                def cleanup
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot be used inside a block/)
+          end
+
+          it 'raises when always is used inside a validate block' do
+            expect do
+              Class.new(Operation::Base) do
+                validate do
+                  step :validation_1
+                  always :cleanup
+                end
+
+                def validation_1
+                end
+
+                def cleanup
+                end
+              end
+            end.to raise_error(ArgumentError, /cannot be used inside a block/)
+          end
+        end
+      end
+
       context 'for finish_if' do
         let(:operation_class) do
           Class.new(Operation::Base) do

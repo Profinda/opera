@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.6.0 - Apr 15, 2026
+
+- Add `always` executor: runs its step unconditionally after all regular steps, regardless of failure or an early finish
+
 ### 0.5.1 - Apr 15, 2026
 
 - Remove `Marshal.dump` from instruction execution for ~40-55% throughput improvement
@@ -14,6 +18,7 @@
 - Remove `benchmark` executor
 
 ### 0.4.1 - Feb 18, 2026
+
 - Add parsed errors to default `output!` exception message
 
 ### 0.4.0 - May 22, 2025
