@@ -28,8 +28,8 @@ module Opera
           end
         end
 
-        define_method :always do |method = nil, &_blk|
-          check_method_availability!(method) if method
+        def always(method)
+          check_method_availability!(method)
           instructions << { kind: :always, method: method }
         end
       end
@@ -59,7 +59,7 @@ module Opera
           end
         end
 
-        define_method :always do |_method = nil, &_blk|
+        def always(_method)
           raise ArgumentError,
                 '`always` cannot be used inside a block (transaction, within, success, validate). ' \
                 'Place `always` steps at the top level of the operation, after all other instructions.'
