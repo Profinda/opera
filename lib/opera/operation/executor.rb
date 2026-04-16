@@ -21,8 +21,9 @@ module Opera
 
       def evaluate_instructions(instructions = [])
         instructions.each do |instruction|
+          next if instruction[:kind] != :always && break_condition
+
           evaluate_instruction(instruction)
-          break if break_condition
         end
       end
 
@@ -57,6 +58,8 @@ module Opera
           Instructions::Executors::FinishIf.new(operation).call(instruction)
         when :within
           Instructions::Executors::Within.new(operation).call(instruction)
+        when :always
+          Instructions::Executors::Always.new(operation).call(instruction)
         else
           raise(UnknownInstructionError, "Unknown instruction #{instruction[:kind]}")
         end

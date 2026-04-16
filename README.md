@@ -112,16 +112,17 @@ end
 
 ## DSL Reference
 
-| Instruction | Description |
-|---|---|
-| `step :method` | Executes a method. Returns falsy to stop execution. |
-| `validate :method` | Executes a method that must return `Dry::Validation::Result` or `Opera::Operation::Result`. Errors are accumulated -- all validations run even if some fail. |
-| `transaction do ... end` | Wraps steps in a database transaction. Rolls back on error. |
-| `success :method` or `success do ... end` | Like `step`, but a falsy return does **not** stop execution. Use for side effects. |
-| `finish_if :method` | Stops execution (successfully) if the method returns truthy. |
-| `operation :method` | Calls an inner operation. Must return `Opera::Operation::Result`. Propagates errors on failure. Output stored in `context[:<method>_output]`. |
-| `operations :method` | Like `operation`, but the method must return an array of `Opera::Operation::Result`. |
-| `within :method do ... end` | Wraps nested steps with a custom method that must `yield`. If it doesn't yield, nested steps are skipped. |
+| Instruction                               | Description                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `step :method`                            | Executes a method. Returns falsy to stop execution.                                                                                                                                                                                                                                               |
+| `validate :method`                        | Executes a method that must return `Dry::Validation::Result` or `Opera::Operation::Result`. Errors are accumulated -- all validations run even if some fail.                                                                                                                                      |
+| `transaction do ... end`                  | Wraps steps in a database transaction. Rolls back on error.                                                                                                                                                                                                                                       |
+| `success :method` or `success do ... end` | Like `step`, but a falsy return does **not** stop execution. Use for side effects.                                                                                                                                                                                                                |
+| `finish_if :method`                       | Stops execution (successfully) if the method returns truthy.                                                                                                                                                                                                                                      |
+| `operation :method`                       | Calls an inner operation. Must return `Opera::Operation::Result`. Propagates errors on failure. Output stored in `context[:<method>_output]`.                                                                                                                                                     |
+| `operations :method`                      | Like `operation`, but the method must return an array of `Opera::Operation::Result`.                                                                                                                                                                                                              |
+| `within :method do ... end`               | Wraps nested steps with a custom method that must `yield`. If it doesn't yield, nested steps are skipped.                                                                                                                                                                                         |
+| `always :method`                          | Executes a step unconditionally after all regular steps, even after a failure or an early finish. Must appear at the end of the operation — only other `always` steps may follow. Cannot be used inside blocks. Use `result.success?` / `result.failure?` inside the method to branch on outcome. |
 
 ### Combining instructions
 
@@ -147,25 +148,26 @@ class MyOperation < Opera::Operation::Base
   end
 
   step :output
+  always :audit_trail
 end
 ```
 
 ## Result API
 
-| Method | Returns | Description |
-|---|---|---|
-| `success?` | `Boolean` | `true` if no errors |
-| `failure?` | `Boolean` | `true` if any errors |
-| `output` | `Object` | The operation's return value |
-| `output!` | `Object` | Returns output if success, raises `OutputError` if failure |
-| `output=` | | Sets the output |
-| `errors` | `Hash` | Accumulated error messages |
-| `failures` | `Hash` | Alias for `errors` |
-| `information` | `Hash` | Developer-facing metadata |
-| `executions` | `Array` | Ordered list of executed steps (development mode only) |
-| `add_error(key, value)` | | Adds a single error |
-| `add_errors(hash)` | | Merges multiple errors |
-| `add_information(hash)` | | Merges metadata |
+| Method                  | Returns   | Description                                                |
+| ----------------------- | --------- | ---------------------------------------------------------- |
+| `success?`              | `Boolean` | `true` if no errors                                        |
+| `failure?`              | `Boolean` | `true` if any errors                                       |
+| `output`                | `Object`  | The operation's return value                               |
+| `output!`               | `Object`  | Returns output if success, raises `OutputError` if failure |
+| `output=`               |           | Sets the output                                            |
+| `errors`                | `Hash`    | Accumulated error messages                                 |
+| `failures`              | `Hash`    | Alias for `errors`                                         |
+| `information`           | `Hash`    | Developer-facing metadata                                  |
+| `executions`            | `Array`   | Ordered list of executed steps (development mode only)     |
+| `add_error(key, value)` |           | Adds a single error                                        |
+| `add_errors(hash)`      |           | Merges multiple errors                                     |
+| `add_information(hash)` |           | Merges metadata                                            |
 
 ```ruby
 # Pre-set output (useful in specs)
@@ -174,13 +176,13 @@ Opera::Operation::Result.new(output: 'success')
 
 ## Operation Instance Methods
 
-| Method | Description |
-|---|---|
-| `context` | Mutable `Hash` for passing data between steps |
-| `params` | Immutable `Hash` received via `call` |
-| `dependencies` | Immutable `Hash` received via `call` |
-| `result` | The `Opera::Operation::Result` instance |
-| `finish!` | Halts step execution (operation is still successful) |
+| Method         | Description                                          |
+| -------------- | ---------------------------------------------------- |
+| `context`      | Mutable `Hash` for passing data between steps        |
+| `params`       | Immutable `Hash` received via `call`                 |
+| `dependencies` | Immutable `Hash` received via `call`                 |
+| `result`       | The `Opera::Operation::Result` instance              |
+| `finish!`      | Halts step execution (operation is still successful) |
 
 ## Testing
 
@@ -204,6 +206,7 @@ Detailed examples with full input/output are available in the [`docs/examples/`]
 - [Finish If](docs/examples/finish-if.md)
 - [Inner Operations](docs/examples/inner-operations.md)
 - [Within](docs/examples/within.md)
+- [Always](docs/examples/always.md)
 - [Context, Params & Dependencies](docs/examples/context-params-dependencies.md)
 
 ## Development
