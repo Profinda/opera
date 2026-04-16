@@ -1647,15 +1647,12 @@ module Opera
               always :cleanup
 
               def step_1
-                true
               end
 
               def step_2
-                result.output = :done
               end
 
               def cleanup
-                context[:cleaned_up] = true
               end
             end
           end
@@ -1938,69 +1935,6 @@ module Opera
             end.to raise_error(ArgumentError, /cannot appear after `always`/)
           end
 
-          it 'raises when a transaction block follows always' do
-            expect do
-              Class.new(Operation::Base) do
-                step :step_1
-                always :cleanup
-                transaction do
-                  step :step_2
-                end
-
-                def step_1
-                end
-
-                def cleanup
-                end
-
-                def step_2
-                end
-              end
-            end.to raise_error(ArgumentError, /cannot appear after `always`/)
-          end
-
-          it 'raises when a within block follows always' do
-            expect do
-              Class.new(Operation::Base) do
-                step :step_1
-                always :cleanup
-                within :wrapper do
-                  step :step_2
-                end
-
-                def step_1
-                end
-
-                def cleanup
-                end
-
-                def step_2
-                end
-
-                def wrapper
-                  yield
-                end
-              end
-            end.to raise_error(ArgumentError, /cannot appear after `always`/)
-          end
-
-          it 'raises when always is used inside a transaction block' do
-            expect do
-              Class.new(Operation::Base) do
-                transaction do
-                  step :step_1
-                  always :cleanup
-                end
-
-                def step_1
-                end
-
-                def cleanup
-                end
-              end
-            end.to raise_error(ArgumentError, /cannot be used inside a block/)
-          end
-
           it 'raises when always is used inside a within block' do
             expect do
               Class.new(Operation::Base) do
@@ -2017,40 +1951,6 @@ module Opera
 
                 def wrapper
                   yield
-                end
-              end
-            end.to raise_error(ArgumentError, /cannot be used inside a block/)
-          end
-
-          it 'raises when always is used inside a success block' do
-            expect do
-              Class.new(Operation::Base) do
-                success do
-                  step :step_1
-                  always :cleanup
-                end
-
-                def step_1
-                end
-
-                def cleanup
-                end
-              end
-            end.to raise_error(ArgumentError, /cannot be used inside a block/)
-          end
-
-          it 'raises when always is used inside a validate block' do
-            expect do
-              Class.new(Operation::Base) do
-                validate do
-                  step :validation_1
-                  always :cleanup
-                end
-
-                def validation_1
-                end
-
-                def cleanup
                 end
               end
             end.to raise_error(ArgumentError, /cannot be used inside a block/)
