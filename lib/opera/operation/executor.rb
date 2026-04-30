@@ -41,6 +41,11 @@ module Opera
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
       def evaluate_instruction(instruction)
+        if instruction[:predicate] && !condition_met?(instruction)
+          add_instruction_output(instruction, nil) if %i[operation operations].include?(instruction[:kind])
+          return
+        end
+
         case instruction[:kind]
         when :step
           Instructions::Executors::Step.new(operation).call(instruction)
@@ -65,6 +70,14 @@ module Opera
         end
       end
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
+
+      # Evaluates the `:predicate` Proc stored on a conditionable instruction.
+      # The predicate is built at class-load time from `:if` / `:unless` and
+      # already encodes the negation for `:unless`, so the executor only needs
+      # to call it in the operation instance scope.
+      def condition_met?(instruction)
+        operation.instance_exec(&instruction[:predicate])
+      end
 
       def result
         operation.result
