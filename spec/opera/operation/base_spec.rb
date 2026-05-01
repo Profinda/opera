@@ -1998,5 +1998,440 @@ module Opera
         end
       end
     end
+
+    describe 'conditional execution (:if / :unless)' do
+      context 'for step' do
+        context 'with `if:` symbol' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1, if: :run_step_1?
+              step :step_2
+
+              def run_step_1?
+                params[:enabled]
+              end
+
+              def step_1
+                context[:step_1_called] = true
+              end
+
+              def step_2
+                result.output = context[:step_1_called]
+              end
+            end
+          end
+
+          context 'when condition is truthy' do
+            subject { operation_class.call(params: { enabled: true }) }
+
+            it 'runs the step' do
+              expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
+              expect(subject.output).to be(true)
+              expect(subject.executions).to include(:step_1, :step_2)
+            end
+          end
+
+          context 'when condition is falsy' do
+            subject { operation_class.call(params: { enabled: false }) }
+
+            it 'skips the step entirely' do
+              expect_any_instance_of(operation_class).not_to receive(:step_1)
+              expect(subject.output).to be_nil
+            end
+
+            it 'does not record the skipped step in executions' do
+              expect(subject.executions).not_to include(:step_1)
+              expect(subject.executions).to include(:step_2)
+            end
+          end
+        end
+
+        context 'with `unless:` symbol' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1, unless: :skip_step_1?
+              step :step_2
+
+              def skip_step_1?
+                params[:skip]
+              end
+
+              def step_1
+                context[:step_1_called] = true
+              end
+
+              def step_2
+                result.output = context[:step_1_called]
+              end
+            end
+          end
+
+          context 'when condition is truthy (skip)' do
+            subject { operation_class.call(params: { skip: true }) }
+
+            it 'skips the step' do
+              expect_any_instance_of(operation_class).not_to receive(:step_1)
+              expect(subject.output).to be_nil
+              expect(subject.executions).not_to include(:step_1)
+            end
+          end
+
+          context 'when condition is falsy (run)' do
+            subject { operation_class.call(params: { skip: false }) }
+
+            it 'runs the step' do
+              expect_any_instance_of(operation_class).to receive(:step_1).and_call_original
+              expect(subject.output).to be(true)
+            end
+          end
+        end
+
+        context 'with `if:` lambda' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1, if: -> { params[:value].to_i > 0 }
+              step :step_2
+
+              def step_1
+                context[:step_1_called] = true
+              end
+
+              def step_2
+                result.output = context[:step_1_called]
+              end
+            end
+          end
+
+          it 'runs the step when lambda is truthy' do
+            expect(operation_class.call(params: { value: 1 }).output).to be(true)
+          end
+
+          it 'skips the step when lambda is falsy' do
+            expect(operation_class.call(params: { value: 0 }).output).to be_nil
+          end
+        end
+
+        context 'with `unless:` lambda' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              step :step_1, unless: -> { params[:skip] }
+              step :step_2
+
+              def step_1
+                context[:step_1_called] = true
+              end
+
+              def step_2
+                result.output = context[:step_1_called]
+              end
+            end
+          end
+
+          it 'runs the step when lambda is falsy' do
+            expect(operation_class.call(params: { skip: false }).output).to be(true)
+          end
+
+          it 'skips the step when lambda is truthy' do
+            expect(operation_class.call(params: { skip: true }).output).to be_nil
+          end
+        end
+      end
+
+      context 'for operation' do
+        let(:nested_operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1
+
+            def step_1
+              result.output = 'nested'
+            end
+          end
+        end
+
+        context 'with `if:` symbol' do
+          let(:operation_class_with_op) do
+            nested = nested_operation_class
+            Class.new(Operation::Base) do
+              operation :run_nested, if: :enabled?
+              step :output
+
+              define_method(:enabled?) do
+                params[:enabled]
+              end
+
+              define_method(:run_nested) do
+                nested.call
+              end
+
+              def output
+                # Skipped operation sets context[:run_nested_output] = nil,
+                # successful operation stores its output there.
+                result.output = context[:run_nested_output]
+              end
+            end
+          end
+
+          context 'when condition is truthy' do
+            subject { operation_class_with_op.call(params: { enabled: true }) }
+
+            it 'runs the operation and stores its output in context' do
+              expect(subject.output).to eq('nested')
+            end
+          end
+
+          context 'when condition is falsy' do
+            subject { operation_class_with_op.call(params: { enabled: false }) }
+
+            it 'skips the operation' do
+              expect_any_instance_of(operation_class_with_op).not_to receive(:run_nested)
+              expect(subject.output).to be_nil
+            end
+
+            it 'does not record skipped operation in executions' do
+              expect(subject.executions.flatten).not_to include(:run_nested)
+            end
+          end
+        end
+
+        context 'with `unless:` lambda' do
+          let(:operation_class_with_op) do
+            nested = nested_operation_class
+            Class.new(Operation::Base) do
+              operation :run_nested, unless: -> { params[:skip] }
+              step :output
+
+              define_method(:run_nested) do
+                nested.call
+              end
+
+              def output
+                result.output = context[:run_nested_output]
+              end
+            end
+          end
+
+          it 'runs when lambda is falsy' do
+            expect(operation_class_with_op.call(params: { skip: false }).output).to eq('nested')
+          end
+
+          it 'skips when lambda is truthy' do
+            expect(operation_class_with_op.call(params: { skip: true }).output).to be_nil
+          end
+        end
+      end
+
+      context 'for operations (plural)' do
+        let(:nested_operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1
+
+            def step_1
+              result.output = 'one'
+            end
+          end
+        end
+
+        let(:operation_class_with_ops) do
+          nested = nested_operation_class
+          Class.new(Operation::Base) do
+            operations :run_batch, if: :enabled?
+            step :output
+
+            define_method(:enabled?) do
+              params[:enabled]
+            end
+
+            define_method(:run_batch) do
+              [nested.call, nested.call]
+            end
+
+            def output
+              result.output = context[:run_batch_output]
+            end
+          end
+        end
+
+        context 'when condition is truthy' do
+          subject { operation_class_with_ops.call(params: { enabled: true }) }
+
+          it 'runs the batch and stores outputs' do
+            expect(subject.output).to eq(%w[one one])
+          end
+        end
+
+        context 'when condition is falsy' do
+          subject { operation_class_with_ops.call(params: { enabled: false }) }
+
+          it 'skips the batch and stores nil in context' do
+            expect_any_instance_of(operation_class_with_ops).not_to receive(:run_batch)
+            # The `output` step reads context[:run_batch_output]; skipped op
+            # sets it to nil so result.output is nil.
+            expect(subject.output).to be_nil
+          end
+        end
+      end
+
+      context 'inside a transaction block' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            transaction do
+              step :persist
+              step :side_effect, if: :enabled?
+            end
+            step :output
+
+            def enabled?
+              params[:enabled]
+            end
+
+            def persist
+              context[:persisted] = true
+            end
+
+            def side_effect
+              context[:side_effect_called] = true
+            end
+
+            def output
+              result.output = {
+                persisted: context[:persisted],
+                side_effect_called: context[:side_effect_called]
+              }
+            end
+          end
+        end
+
+        before do
+          Operation::Config.configure do |config|
+            config.transaction_class = Class.new do
+              def self.transaction
+                yield
+              end
+            end
+          end
+        end
+
+        it 'runs the conditional step when condition is truthy' do
+          result = operation_class.call(params: { enabled: true })
+          expect(result.output).to eq(persisted: true, side_effect_called: true)
+        end
+
+        it 'skips the conditional step when condition is falsy' do
+          result = operation_class.call(params: { enabled: false })
+          expect(result.output).to eq(persisted: true, side_effect_called: nil)
+        end
+      end
+
+      context 'inside a within block' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            within :wrapper do
+              step :inner_step, if: :enabled?
+            end
+
+            def enabled?
+              params[:enabled]
+            end
+
+            def wrapper
+              yield
+            end
+
+            def inner_step
+              result.output = :ran
+            end
+          end
+        end
+
+        it 'runs when condition is truthy' do
+          expect(operation_class.call(params: { enabled: true }).output).to eq(:ran)
+        end
+
+        it 'skips when condition is falsy' do
+          expect(operation_class.call(params: { enabled: false }).output).to be_nil
+        end
+      end
+
+      context 'when both :if and :unless are passed' do
+        it 'raises ArgumentError at class definition time' do
+          expect do
+            Class.new(Operation::Base) do
+              step :step_1, if: :foo?, unless: :bar?
+            end
+          end.to raise_error(ArgumentError, /both :if and :unless/)
+        end
+
+        it 'raises ArgumentError for operation' do
+          expect do
+            Class.new(Operation::Base) do
+              operation :op_1, if: :foo?, unless: :bar?
+            end
+          end.to raise_error(ArgumentError, /both :if and :unless/)
+        end
+
+        it 'raises ArgumentError inside a block' do
+          expect do
+            Class.new(Operation::Base) do
+              transaction do
+                step :step_1, if: :foo?, unless: :bar?
+              end
+            end
+          end.to raise_error(ArgumentError, /both :if and :unless/)
+        end
+      end
+
+      context 'when condition references undefined symbol' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1, if: :no_such_method?
+
+            def step_1
+              true
+            end
+          end
+        end
+
+        it 'raises NoMethodError at evaluation time' do
+          expect { operation_class.call }.to raise_error(NoMethodError, /no_such_method\?/)
+        end
+      end
+
+      context 'instance_exec semantics for lambda' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1, if: -> { context[:flag] }
+
+            def step_1
+              result.output = :ran
+            end
+          end
+        end
+
+        it 'evaluates lambda in operation instance scope' do
+          op = operation_class.new
+          op.context[:flag] = true
+          # Run via .call where context is empty -> skipped
+          expect(operation_class.call.output).to be_nil
+        end
+      end
+
+      context 'across multiple invocations' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1, if: -> { params[:enabled] }
+
+            def step_1
+              result.output = :ran
+            end
+          end
+        end
+
+        it 'is stateless and re-evaluates conditions per call' do
+          expect(operation_class.call(params: { enabled: true }).output).to eq(:ran)
+          expect(operation_class.call(params: { enabled: false }).output).to be_nil
+          expect(operation_class.call(params: { enabled: true }).output).to eq(:ran)
+        end
+      end
+    end
   end
 end

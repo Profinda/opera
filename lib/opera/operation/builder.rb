@@ -16,7 +16,7 @@ module Opera
         end
 
         INNER_INSTRUCTIONS.each do |instruction|
-          define_method instruction do |method = nil, &blk|
+          define_method instruction do |method = nil, **opts, &blk|
             if instructions.any? { |i| i[:kind] == :always }
               raise ArgumentError,
                     "`#{instruction}` cannot appear after `always`. " \
@@ -24,7 +24,7 @@ module Opera
             end
 
             check_method_availability!(method) if method
-            instructions.concat(InnerBuilder.new.send(instruction, method, &blk))
+            instructions.concat(InnerBuilder.new.send(instruction, method, **opts, &blk))
           end
         end
 
@@ -43,19 +43,13 @@ module Opera
         end
 
         INNER_INSTRUCTIONS.each do |instruction|
-          define_method instruction do |method = nil, &blk|
-            instructions << if !blk.nil?
-                              {
-                                kind: instruction,
-                                label: method,
-                                instructions: InnerBuilder.new(&blk).instructions
-                              }
-                            else
-                              {
-                                kind: instruction,
-                                method: method
-                              }
-                            end
+          define_method instruction do |method = nil, **opts, &blk|
+            entry = if blk
+                      { kind: instruction, label: method, instructions: InnerBuilder.new(&blk).instructions }
+                    else
+                      { kind: instruction, method: method }
+                    end
+            instructions << entry.merge(OptionsBuilder.build(opts))
           end
         end
 
