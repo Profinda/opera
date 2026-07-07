@@ -126,11 +126,15 @@ end
 
 ### Conditional execution (`:if` / `:unless`)
 
-`step`, `operation`, and `operations` accept `:if` and `:unless` keyword
-arguments for declarative conditional execution. The condition is evaluated
-**before** the step's method is called -- if the condition is not met the
-step is skipped entirely (no method invocation, no side effects, not recorded
-in `result.executions`).
+The `:if` and `:unless` keyword arguments provide declarative conditional
+execution. They are supported on `validate`, `transaction`, `step`, `success`,
+`finish_if`, `operation`, `operations`, and `within` (every instruction except
+`always`). For block instructions (`transaction`, `within`), a falsy condition
+skips the whole block, including its nested instructions.
+
+The condition is evaluated **before** the instruction runs -- if the condition
+is not met the instruction is skipped entirely (no method invocation, no side
+effects, not recorded in `result.executions`).
 
 The condition value can be a **Symbol** (method name on the operation) or a
 **Proc/Lambda** (evaluated via `instance_exec` in the operation instance
@@ -138,25 +142,19 @@ scope).
 
 ```ruby
 # Symbol form
-step    :notify_user,                if: :notifications_enabled?
-operation :create_internal_experience, if: :internal_experience_authorized?
+step :notify_user, if: :notifications_enabled?
 
 # Lambda form
-step      :recalculate, unless: -> { params[:skip_recalculation] }
-operation :reopen_and_reset, if: -> { profile_ids.present? }
+step :recalculate, unless: -> { params[:skip_recalculation] }
 ```
 
-When an `operation` or `operations` step is skipped, its
+When an `operation` or `operations` instruction is skipped, its
 `context[:<method>_output]` slot is set to `nil` (matching the historical
-`return Opera::Operation::Result.new` early-exit behavior). When a plain
-`step` is skipped, no context output is set.
+`return Opera::Operation::Result.new` early-exit behavior). For other
+instructions no context output is set.
 
-Passing both `:if` and `:unless` on the same step raises `ArgumentError` at
-class load time.
-
-`:if` / `:unless` are not supported on `validate`, `success`, `finish_if`,
-`transaction`, `within`, or `always` -- conditional containers and validation
-have ambiguous semantics.
+Passing both `:if` and `:unless` on the same instruction raises `ArgumentError`
+at class load time.
 
 ### Combining instructions
 
