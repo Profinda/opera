@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.7.0 - Apr 30, 2026
+
+- Add `:if` / `:unless` options to all instructions except `always` (`validate`, `transaction`, `step`, `success`, `finish_if`, `operation`, `operations`, `within`) for declarative conditional execution. Conditions accept a Symbol (method name) or a Proc/Lambda (evaluated via `instance_exec` in the operation instance scope). Skipped instructions do not execute and are not recorded in `result.executions`; for block instructions (`transaction`, `within`) the whole block, including nested instructions, is skipped. For `operation` / `operations`, the conventional `<method>_output` slot in context is set to `nil` when skipped, matching the historical `return Opera::Operation::Result.new` early-exit behavior. Passing both `:if` and `:unless` on the same instruction raises `ArgumentError` at class load time.
+
 ### 0.6.0 - Apr 15, 2026
 
 - Add `always` executor: runs its step unconditionally after all regular steps, regardless of failure or an early finish

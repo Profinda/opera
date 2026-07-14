@@ -124,6 +124,38 @@ end
 | `within :method do ... end`               | Wraps nested steps with a custom method that must `yield`. If it doesn't yield, nested steps are skipped.                                                                                                                                                                                         |
 | `always :method`                          | Executes a step unconditionally after all regular steps, even after a failure or an early finish. Must appear at the end of the operation — only other `always` steps may follow. Cannot be used inside blocks. Use `result.success?` / `result.failure?` inside the method to branch on outcome. |
 
+### Conditional execution (`:if` / `:unless`)
+
+The `:if` and `:unless` keyword arguments provide declarative conditional
+execution. They are supported on `validate`, `transaction`, `step`, `success`,
+`finish_if`, `operation`, `operations`, and `within` (every instruction except
+`always`). For block instructions (`transaction`, `within`), a falsy condition
+skips the whole block, including its nested instructions.
+
+The condition is evaluated **before** the instruction runs -- if the condition
+is not met the instruction is skipped entirely (no method invocation, no side
+effects, not recorded in `result.executions`).
+
+The condition value can be a **Symbol** (method name on the operation) or a
+**Proc/Lambda** (evaluated via `instance_exec` in the operation instance
+scope).
+
+```ruby
+# Symbol form
+step :notify_user, if: :notifications_enabled?
+
+# Lambda form
+step :recalculate, unless: -> { params[:skip_recalculation] }
+```
+
+When an `operation` or `operations` instruction is skipped, its
+`context[:<method>_output]` slot is set to `nil` (matching the historical
+`return Opera::Operation::Result.new` early-exit behavior). For other
+instructions no context output is set.
+
+Passing both `:if` and `:unless` on the same instruction raises `ArgumentError`
+at class load time.
+
 ### Combining instructions
 
 ```ruby

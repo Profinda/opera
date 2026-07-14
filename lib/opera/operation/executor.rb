@@ -41,6 +41,11 @@ module Opera
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
       def evaluate_instruction(instruction)
+        if instruction[:predicate] && !operation.instance_exec(&instruction[:predicate])
+          add_instruction_output(instruction, nil) if %i[operation operations].include?(instruction[:kind])
+          return
+        end
+
         case instruction[:kind]
         when :step
           Instructions::Executors::Step.new(operation).call(instruction)

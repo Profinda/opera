@@ -1998,5 +1998,119 @@ module Opera
         end
       end
     end
+
+    describe 'conditional execution (:if / :unless)' do
+      context 'for step' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1, if: :run?
+            step :step_2, unless: -> { params[:skip_2] }
+
+            def run?
+              params[:run]
+            end
+
+            def step_1
+              context[:step_1_ran] = true
+            end
+
+            def step_2
+              result.output = { step_1: context[:step_1_ran], step_2: true }
+            end
+          end
+        end
+
+        it 'runs a step when `if:` symbol is truthy and `unless:` lambda is falsy' do
+          result = operation_class.call(params: { run: true, skip_2: false })
+          expect(result.output).to eq(step_1: true, step_2: true)
+          expect(result.executions).to include(:step_1, :step_2)
+        end
+
+        it 'skips a step when `if:` symbol is falsy, not recording it in executions' do
+          result = operation_class.call(params: { run: false, skip_2: false })
+          expect(result.output).to eq(step_1: nil, step_2: true)
+          expect(result.executions).not_to include(:step_1)
+        end
+
+        it 'skips a step when `unless:` lambda is truthy' do
+          result = operation_class.call(params: { run: true, skip_2: true })
+          expect(result.output).to be_nil
+          expect(result.executions).not_to include(:step_2)
+        end
+      end
+
+      context 'for operation' do
+        let(:nested_operation_class) do
+          Class.new(Operation::Base) do
+            step :step_1
+
+            def step_1
+              result.output = 'nested'
+            end
+          end
+        end
+
+        let(:operation_class) do
+          nested = nested_operation_class
+          Class.new(Operation::Base) do
+            operation :run_nested, unless: :skip?
+            step :output
+
+            define_method(:skip?) { params[:skip] }
+            define_method(:run_nested) { nested.call }
+
+            def output
+              result.output = context[:run_nested_output]
+            end
+          end
+        end
+
+        it 'runs the operation when `unless:` symbol is falsy' do
+          expect(operation_class.call(params: { skip: false }).output).to eq('nested')
+        end
+
+        it 'skips the operation and sets its context output to nil when `unless:` symbol is truthy' do
+          result = operation_class.call(params: { skip: true })
+          expect(result.output).to be_nil
+          expect(result.executions.flatten).not_to include(:run_nested)
+        end
+      end
+
+      context 'inside a within block' do
+        let(:operation_class) do
+          Class.new(Operation::Base) do
+            within :wrapper do
+              step :inner_step, if: -> { params[:enabled] }
+            end
+
+            def wrapper
+              yield
+            end
+
+            def inner_step
+              result.output = :ran
+            end
+          end
+        end
+
+        it 'runs the nested step when the block condition is truthy' do
+          expect(operation_class.call(params: { enabled: true }).output).to eq(:ran)
+        end
+
+        it 'skips the nested step when the block condition is falsy' do
+          expect(operation_class.call(params: { enabled: false }).output).to be_nil
+        end
+      end
+
+      context 'when both :if and :unless are passed' do
+        it 'raises ArgumentError at class definition time' do
+          expect do
+            Class.new(Operation::Base) do
+              step :step_1, if: :foo?, unless: :bar?
+            end
+          end.to raise_error(ArgumentError, /Cannot use :if and :unless together/)
+        end
+      end
+    end
   end
 end

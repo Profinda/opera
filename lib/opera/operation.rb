@@ -2,6 +2,7 @@
 
 require 'opera/operation/attributes_dsl'
 require 'opera/operation/builder'
+require 'opera/operation/builder/options_builder'
 require 'opera/operation/base'
 require 'opera/operation/executor'
 require 'opera/operation/instrumentation'
