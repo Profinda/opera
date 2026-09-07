@@ -1277,6 +1277,32 @@ module Opera
           end
         end
 
+        context 'with the validate instruction' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              validate :schema
+              step :step_1
+
+              def schema
+                Class.new(Dry::Validation::Contract) do
+                  params { required(:name).filled }
+                end.new.call(params)
+              end
+
+              def step_1
+                result.output = schema_output
+              end
+            end
+          end
+
+          subject { operation_class.call(params: { name: 'Opera' }) }
+
+          it 'exposes the validation output through the auto-generated reader' do
+            expect(subject).to be_success
+            expect(subject.output).to eq(name: 'Opera')
+          end
+        end
+
         context 'when a matching reader is declared manually before the operation' do
           let(:operation_class) do
             Class.new(Operation::Base) do

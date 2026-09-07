@@ -2,6 +2,8 @@
 
 Opera supports `Dry::Validation::Result` and `Opera::Operation::Result` as return types from validate steps. Validations accumulate errors -- all validations run even if earlier ones fail, so the caller gets all errors at once.
 
+The output of a `validate` step is stored in context as `:<method_name>_output`, and Opera defines a matching `<method_name>_output` reader automatically, so you can read the sanitized/validated params directly in later steps.
+
 ## Example with sanitizing parameters
 
 ```ruby
@@ -29,7 +31,8 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    self.profile = current_account.profiles.create(context[:profile_schema_output])
+    # `profile_schema_output` is the auto-generated reader for `validate :profile_schema`
+    self.profile = current_account.profiles.create(profile_schema_output)
   end
 
   def send_email

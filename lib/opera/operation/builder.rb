@@ -5,7 +5,7 @@ module Opera
     module Builder
       INSTRUCTIONS = %I[validate transaction step success finish_if operation operations within always].freeze
       INNER_INSTRUCTIONS = (INSTRUCTIONS - %I[always]).freeze
-      OUTPUT_INSTRUCTIONS = %I[operation operations].freeze
+      OUTPUT_INSTRUCTIONS = %I[validate operation operations].freeze
 
       def self.included(base)
         base.extend(ClassMethods)
