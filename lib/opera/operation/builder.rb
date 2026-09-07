@@ -5,7 +5,7 @@ module Opera
     module Builder
       INSTRUCTIONS = %I[validate transaction step success finish_if operation operations within always].freeze
       INNER_INSTRUCTIONS = (INSTRUCTIONS - %I[always]).freeze
-      OUTPUT_INSTRUCTIONS = %I[operation operations].freeze
+      OUTPUT_INSTRUCTIONS = %I[validate operation operations].freeze
 
       def self.included(base)
         base.extend(ClassMethods)
@@ -25,14 +25,22 @@ module Opera
             end
 
             check_method_availability!(method) if method
-            define_output_reader(method) if method && OUTPUT_INSTRUCTIONS.include?(instruction)
-            instructions.concat(InnerBuilder.new.send(instruction, method, **opts, &blk))
+            entries = InnerBuilder.new.send(instruction, method, **opts, &blk)
+            define_output_readers(entries)
+            instructions.concat(entries)
           end
         end
 
         def always(method)
           check_method_availability!(method)
           instructions << { kind: :always, method: method }
+        end
+
+        def define_output_readers(entries)
+          entries.each do |entry|
+            define_output_reader(entry[:method]) if entry[:method] && OUTPUT_INSTRUCTIONS.include?(entry[:kind])
+            define_output_readers(entry[:instructions]) if entry[:instructions]
+          end
         end
 
         def define_output_reader(method)

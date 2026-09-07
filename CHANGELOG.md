@@ -1,5 +1,10 @@
 # Opera Changelog
 
+### 0.7.2 - Sep 07, 2026
+
+- Extend the automatic `<method>_output` reader to `validate` instructions, so the sanitized/validated output of a `validate :schema` step is readable as `schema_output` in later steps without a manual `context { attr_reader :schema_output }` declaration.
+- Generate automatic `<method>_output` readers for `validate` / `operation` / `operations` instructions nested inside block instructions (`transaction`, `within`, etc.), not only top-level ones.
+
 ### 0.7.1 - Sep 07, 2026
 
 - Automatically define a `<method>_output` reader for every `operation` / `operations` instruction, so the output of an inner operation is readable in later steps without a manual `context { attr_reader :<method>_output }` declaration. The reader returns the value stored at `context[:<method>_output]`, which remains accessible directly as before. If a reader with that name is already declared before the instruction (following the convention of declaring `context` / `params` / `dependencies` above the DSL steps), the manual one is kept and no automatic reader is created.

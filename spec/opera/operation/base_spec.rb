@@ -1277,6 +1277,55 @@ module Opera
           end
         end
 
+        context 'with the validate instruction' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              validate :schema
+              step :step_1
+
+              def schema
+                Class.new(Dry::Validation::Contract) do
+                  params { required(:name).filled }
+                end.new.call(params)
+              end
+
+              def step_1
+                result.output = schema_output
+              end
+            end
+          end
+
+          subject { operation_class.call(params: { name: 'Opera' }) }
+
+          it 'exposes the validation output through the auto-generated reader' do
+            expect(subject).to be_success
+            expect(subject.output).to eq(name: 'Opera')
+          end
+        end
+
+        context 'when the instruction is nested inside a block' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              within :wrapper do
+                operation :write_history
+                validate :schema
+              end
+
+              def wrapper
+                yield
+              end
+
+              def write_history; end
+
+              def schema; end
+            end
+          end
+
+          it 'defines readers for nested operation and validate instructions' do
+            expect(operation_class.instance_methods(false)).to include(:write_history_output, :schema_output)
+          end
+        end
+
         context 'when a matching reader is declared manually before the operation' do
           let(:operation_class) do
             Class.new(Operation::Base) do
