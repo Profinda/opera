@@ -1303,6 +1303,29 @@ module Opera
           end
         end
 
+        context 'when the instruction is nested inside a block' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              within :wrapper do
+                operation :write_history
+                validate :schema
+              end
+
+              def wrapper
+                yield
+              end
+
+              def write_history; end
+
+              def schema; end
+            end
+          end
+
+          it 'defines readers for nested operation and validate instructions' do
+            expect(operation_class.instance_methods(false)).to include(:write_history_output, :schema_output)
+          end
+        end
+
         context 'when a matching reader is declared manually before the operation' do
           let(:operation_class) do
             Class.new(Operation::Base) do

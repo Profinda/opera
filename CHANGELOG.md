@@ -3,6 +3,7 @@
 ### 0.7.2 - Sep 07, 2026
 
 - Extend the automatic `<method>_output` reader to `validate` instructions, so the sanitized/validated output of a `validate :schema` step is readable as `schema_output` in later steps without a manual `context { attr_reader :schema_output }` declaration.
+- Generate automatic `<method>_output` readers for `validate` / `operation` / `operations` instructions nested inside block instructions (`transaction`, `within`, etc.), not only top-level ones.
 
 ### 0.7.1 - Sep 07, 2026
 
