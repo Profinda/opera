@@ -1202,6 +1202,126 @@ module Opera
         end
       end
 
+      context 'for automatic <method>_output readers' do
+        let(:valid_operation) do
+          Class.new(Operation::Base) do
+            step :step_1
+
+            def step_1
+              result.output = { example: 'output' }
+            end
+          end
+        end
+
+        context 'with the operation instruction' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              operation :operation_1
+              step :step_1
+
+              def operation_1
+                dependencies[:injected_operation].call
+              end
+
+              def step_1
+                result.output = operation_1_output
+              end
+            end
+          end
+
+          let(:dependencies) do
+            { injected_operation: valid_operation }
+          end
+
+          it 'exposes the output through the auto-generated reader' do
+            expect(subject).to be_success
+            expect(subject.output).to eq(example: 'output')
+          end
+
+          it 'defines the reader on the operation class' do
+            expect(operation_class.instance_methods(false)).to include(:operation_1_output)
+          end
+
+          it 'exposes the output through direct context access as well' do
+            operation = operation_class.new(dependencies: dependencies)
+            Opera::Operation::Executor.new(operation).evaluate_instructions(operation_class.instructions)
+
+            expect(operation.context[:operation_1_output]).to eq(example: 'output')
+            expect(operation.operation_1_output).to eq(operation.context[:operation_1_output])
+          end
+        end
+
+        context 'with the operations instruction' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              operations :operations_collection
+              step :step_1
+
+              def operations_collection
+                (1..2).map { dependencies[:injected_operation].call }
+              end
+
+              def step_1
+                result.output = operations_collection_output
+              end
+            end
+          end
+
+          let(:dependencies) do
+            { injected_operation: valid_operation }
+          end
+
+          it 'exposes the collection output through the auto-generated reader' do
+            expect(subject).to be_success
+            expect(subject.output).to eq([{ example: 'output' }, { example: 'output' }])
+          end
+        end
+
+        context 'when a matching reader is declared manually before the operation' do
+          let(:operation_class) do
+            Class.new(Operation::Base) do
+              context do
+                attr_reader :operation_1_output
+              end
+
+              operation :operation_1
+              step :step_1
+
+              def operation_1
+                dependencies[:injected_operation].call
+              end
+
+              def step_1
+                result.output = operation_1_output
+              end
+            end
+          end
+
+          let(:dependencies) do
+            { injected_operation: valid_operation }
+          end
+
+          it 'does not raise and keeps the output readable' do
+            expect(subject).to be_success
+            expect(subject.output).to eq(example: 'output')
+          end
+        end
+
+        context 'when a matching reader is declared manually after the operation' do
+          it 'raises already defined error' do
+            expect do
+              Class.new(Operation::Base) do
+                operation :operation_1
+
+                context do
+                  attr_reader :operation_1_output
+                end
+              end
+            end.to raise_error(ArgumentError, /operation_1_output is already defined/)
+          end
+        end
+      end
+
       context 'for within' do
         let(:operation_class) do
           Class.new(Operation::Base) do

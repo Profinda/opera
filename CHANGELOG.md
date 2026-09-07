@@ -1,5 +1,9 @@
 # Opera Changelog
 
+### 0.7.1 - Sep 07, 2026
+
+- Automatically define a `<method>_output` reader for every `operation` / `operations` instruction, so the output of an inner operation is readable in later steps without a manual `context { attr_reader :<method>_output }` declaration. The reader returns the value stored at `context[:<method>_output]`, which remains accessible directly as before. If a reader with that name is already declared before the instruction (following the convention of declaring `context` / `params` / `dependencies` above the DSL steps), the manual one is kept and no automatic reader is created.
+
 ### 0.7.0 - Apr 30, 2026
 
 - Add `:if` / `:unless` options to all instructions except `always` (`validate`, `transaction`, `step`, `success`, `finish_if`, `operation`, `operations`, `within`) for declarative conditional execution. Conditions accept a Symbol (method name) or a Proc/Lambda (evaluated via `instance_exec` in the operation instance scope). Skipped instructions do not execute and are not recorded in `result.executions`; for block instructions (`transaction`, `within`) the whole block, including nested instructions, is skipped. For `operation` / `operations`, the conventional `<method>_output` slot in context is set to `nil` when skipped, matching the historical `return Opera::Operation::Result.new` early-exit behavior. Passing both `:if` and `:unless` on the same instruction raises `ArgumentError` at class load time.
