@@ -4,6 +4,8 @@
 
 Use `operation` to call another Opera operation from within a step. The method must return an `Opera::Operation::Result`. If the inner operation fails, errors are propagated and execution stops. If it succeeds, its output is stored in context as `:<method_name>_output`.
 
+Opera also defines a `<method_name>_output` reader automatically, so you can access the output directly in later steps without declaring `context { attr_reader :<method_name>_output }` yourself. Both `context[:<method_name>_output]` and the reader return the same value.
+
 ```ruby
 class Profile::Find < Opera::Operation::Base
   step :find
@@ -33,12 +35,13 @@ class Profile::Create < Opera::Operation::Base
   end
 
   def create
-    return if context[:find_output]
+    # `find_output` is the auto-generated reader for `operation :find`
+    return if find_output
     puts 'not found'
   end
 
   def output
-    result.output = { model: context[:find_output] }
+    result.output = { model: find_output }
   end
 end
 ```
@@ -82,7 +85,8 @@ class Profile::CreateMultiple < Opera::Operation::Base
   end
 
   def output
-    result.output = context[:create_multiple_output]
+    # `create_multiple_output` is the auto-generated reader for `operations :create_multiple`
+    result.output = create_multiple_output
   end
 end
 ```
